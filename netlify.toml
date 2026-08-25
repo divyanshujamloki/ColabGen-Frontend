@@ -4,7 +4,4 @@
 
 [build.environment]
   NODE_VERSION = "22"
-  # Override in Netlify UI if needed; NEXT_PUBLIC_* must be set in Site settings → Environment variables
   NEXT_PUBLIC_API_BASE_URL = "https://colabgen.onrender.com"
-
-# Next.js 16 is detected automatically (OpenNext adapter). No plugin pin required.

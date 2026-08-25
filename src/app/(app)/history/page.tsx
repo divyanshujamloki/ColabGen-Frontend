@@ -1,18 +1,41 @@
+"use client";
+
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { useEffect, useState } from "react";
+import { listJobs } from "@/lib/api/client";
 import type { JobRow } from "@/lib/api/types";
+import { getAccessToken } from "@/lib/auth/session";
 
-export default async function HistoryPage() {
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("jobs")
-    .select(
-      "id, user_id, type, status, prompt, result_url, seed, inference_ms, error, created_at",
-    )
-    .order("created_at", { ascending: false })
-    .limit(50);
+export default function HistoryPage() {
+  const [jobs, setJobs] = useState<JobRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const jobs = (data ?? []) as JobRow[];
+  useEffect(() => {
+    let cancelled = false;
+    async function load() {
+      const token = getAccessToken();
+      if (!token) {
+        setError("Not signed in");
+        setLoading(false);
+        return;
+      }
+      try {
+        const rows = await listJobs(token);
+        if (!cancelled) setJobs(rows);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load jobs");
+        }
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="animate-fade-up">
@@ -20,12 +43,14 @@ export default async function HistoryPage() {
         History
       </h1>
       <p className="mb-8 max-w-xl text-muted">
-        Your recent jobs from Supabase (RLS — own rows only).
+        Your recent jobs from the API (<code className="text-accent">GET /jobs</code>).
       </p>
 
-      {error ? (
+      {loading ? (
+        <p className="text-sm text-muted">Loading…</p>
+      ) : error ? (
         <p className="text-sm text-danger" role="alert">
-          Failed to load jobs: {error.message}
+          {error}
         </p>
       ) : jobs.length === 0 ? (
         <div className="rounded-lg border border-border bg-surface/50 px-6 py-12 text-center">

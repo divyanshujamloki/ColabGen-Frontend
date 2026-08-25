@@ -1,8 +1,27 @@
-import { type NextRequest } from "next/server";
-import { updateSession } from "@/lib/supabase/middleware";
+import { NextResponse, type NextRequest } from "next/server";
+import { hasSessionCookie } from "@/lib/auth/cookie";
 
-export async function middleware(request: NextRequest) {
-  return updateSession(request);
+export function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
+  const authed = hasSessionCookie(request.headers.get("cookie"));
+  const isProtected =
+    path.startsWith("/generate") || path.startsWith("/history");
+  const isAuthPage = path === "/login" || path === "/signup";
+
+  if (isProtected && !authed) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/login";
+    url.searchParams.set("next", path);
+    return NextResponse.redirect(url);
+  }
+
+  if (isAuthPage && authed) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/generate";
+    return NextResponse.redirect(url);
+  }
+
+  return NextResponse.next();
 }
 
 export const config = {

@@ -3,7 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { login } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/types";
+import { saveSession } from "@/lib/auth/session";
 
 export function LoginForm() {
   const router = useRouter();
@@ -18,18 +20,16 @@ export function LoginForm() {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const supabase = createClient();
-    const { error: err } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (err) {
-      setError(err.message);
-      return;
+    try {
+      const session = await login(email, password);
+      saveSession(session);
+      router.push(next);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof ApiError || err instanceof Error ? err.message : "Sign in failed");
+    } finally {
+      setLoading(false);
     }
-    router.push(next);
-    router.refresh();
   }
 
   return (

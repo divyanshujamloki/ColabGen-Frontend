@@ -31,14 +31,12 @@ export type VideoGenerateBody = {
   seed?: number | null;
 };
 
-/** Async accept (HTTP 202) when ASYNC_GENERATION is on (production / Render). */
 export type GenerateAccepted = {
   id: string;
   type: JobType;
   status: "running";
 };
 
-/** Sync success (HTTP 200) when async is off. */
 export type GenerateSucceeded = {
   id: string;
   type: JobType;
@@ -49,7 +47,6 @@ export type GenerateSucceeded = {
 };
 
 export type GenerateResult = GenerateSucceeded;
-
 export type GenerateResponse = GenerateAccepted | GenerateSucceeded;
 
 export type JobRow = {
@@ -63,6 +60,13 @@ export type JobRow = {
   inference_ms: number | null;
   error: string | null;
   created_at: string;
+};
+
+export type AuthSession = {
+  access_token: string;
+  refresh_token: string;
+  expires_in: number;
+  user: { id: string; email: string | null };
 };
 
 export type ApiErrorBody = {

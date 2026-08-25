@@ -16,7 +16,8 @@ export default function SignupPage() {
           Create account
         </h1>
         <p className="mb-8 text-sm text-muted">
-          Email and password via Supabase Auth.
+          Creates an account via the ColabGen API (
+          <code className="text-accent">POST /auth/signup</code>).
         </p>
         <SignupForm />
       </div>

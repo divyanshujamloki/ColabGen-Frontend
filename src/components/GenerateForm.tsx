@@ -3,7 +3,7 @@
 import { FormEvent, useRef, useState } from "react";
 import { generateImage, generateVideo } from "@/lib/api/client";
 import { ApiError, type GenerateResult } from "@/lib/api/types";
-import { createClient } from "@/lib/supabase/client";
+import { getAccessToken } from "@/lib/auth/session";
 
 type Mode = "image" | "video";
 
@@ -38,11 +38,8 @@ export function GenerateForm() {
     abortRef.current = ac;
 
     try {
-      const supabase = createClient();
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-      if (!session?.access_token) {
+      const accessToken = getAccessToken();
+      if (!accessToken) {
         throw new Error("Not signed in");
       }
 
@@ -65,7 +62,7 @@ export function GenerateForm() {
       const data =
         mode === "image"
           ? await generateImage(
-              session.access_token,
+              accessToken,
               {
                 prompt,
                 negative_prompt: negativePrompt || null,
@@ -78,7 +75,7 @@ export function GenerateForm() {
               pollOpts,
             )
           : await generateVideo(
-              session.access_token,
+              accessToken,
               {
                 prompt,
                 negative_prompt: negativePrompt || null,

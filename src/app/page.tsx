@@ -1,16 +1,19 @@
+"use client";
+
 import Link from "next/link";
 import { SiteHeader } from "@/components/SiteHeader";
-import { createClient } from "@/lib/supabase/server";
+import { getStoredEmail } from "@/lib/auth/session";
+import { useEffect, useState } from "react";
 
-export default async function HomePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+export default function HomePage() {
+  const [email, setEmail] = useState<string | null>(null);
+  useEffect(() => {
+    setEmail(getStoredEmail());
+  }, []);
 
   return (
     <>
-      <SiteHeader email={user?.email} />
+      <SiteHeader />
       <main className="relative flex flex-1 flex-col overflow-hidden">
         <div className="pointer-events-none absolute inset-0 bg-grid" aria-hidden />
         <section className="relative z-10 mx-auto flex w-full max-w-6xl flex-1 flex-col justify-center px-4 py-20 sm:px-6 sm:py-28">
@@ -27,12 +30,12 @@ export default async function HomePage() {
           </p>
           <div className="animate-fade-up-delay mt-10 flex flex-wrap gap-3">
             <Link
-              href={user ? "/generate" : "/signup"}
+              href={email ? "/generate" : "/signup"}
               className="rounded-md bg-accent px-6 py-3 font-[family-name:var(--font-display)] font-semibold text-[#0c1218] transition hover:bg-accent-dim"
             >
-              {user ? "Open studio" : "Get started"}
+              {email ? "Open studio" : "Get started"}
             </Link>
-            {!user ? (
+            {!email ? (
               <Link
                 href="/login"
                 className="rounded-md border border-border px-6 py-3 font-medium text-foreground transition hover:border-accent/40 hover:text-accent"

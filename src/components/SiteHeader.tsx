@@ -1,11 +1,25 @@
-import Link from "next/link";
-import { signOut } from "@/app/auth/signout/actions";
+"use client";
 
-export function SiteHeader({
-  email,
-}: {
-  email?: string | null;
-}) {
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { clearSession, getStoredEmail } from "@/lib/auth/session";
+import { useEffect, useState } from "react";
+
+export function SiteHeader() {
+  const router = useRouter();
+  const [email, setEmail] = useState<string | null>(null);
+
+  useEffect(() => {
+    setEmail(getStoredEmail());
+  }, []);
+
+  function signOut() {
+    clearSession();
+    setEmail(null);
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <header className="relative z-10 border-b border-border/80 backdrop-blur-sm">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
@@ -33,14 +47,13 @@ export function SiteHeader({
               <span className="hidden max-w-[10rem] truncate font-mono text-xs text-muted sm:inline">
                 {email}
               </span>
-              <form action={signOut}>
-                <button
-                  type="submit"
-                  className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
-                >
-                  Sign out
-                </button>
-              </form>
+              <button
+                type="button"
+                onClick={signOut}
+                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
+              >
+                Sign out
+              </button>
             </>
           ) : (
             <>

@@ -1,5 +1,6 @@
 import {
   ApiError,
+  type AuthSession,
   type GenerateAccepted,
   type GenerateResponse,
   type GenerateResult,
@@ -46,15 +47,59 @@ export async function getHealth(): Promise<HealthResponse> {
   return parseJson<HealthResponse>(res);
 }
 
+export async function signup(
+  email: string,
+  password: string,
+): Promise<AuthSession> {
+  const res = await fetch(`${baseUrl()}/auth/signup`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return parseJson<AuthSession>(res);
+}
+
+export async function login(
+  email: string,
+  password: string,
+): Promise<AuthSession> {
+  const res = await fetch(`${baseUrl()}/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, password }),
+  });
+  return parseJson<AuthSession>(res);
+}
+
+export async function getMe(
+  accessToken: string,
+): Promise<{ user: { id: string; email: string | null } }> {
+  const res = await fetch(`${baseUrl()}/auth/me`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  return parseJson(res);
+}
+
+export async function listJobs(
+  accessToken: string,
+  limit = 50,
+): Promise<JobRow[]> {
+  const res = await fetch(`${baseUrl()}/jobs?limit=${limit}`, {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  const data = await parseJson<{ jobs: JobRow[] }>(res);
+  return data.jobs;
+}
+
 export async function getJob(
   accessToken: string,
   id: string,
 ): Promise<JobRow> {
   const res = await fetch(`${baseUrl()}/jobs/${id}`, {
     method: "GET",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-    },
+    headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });
   return parseJson<JobRow>(res);
@@ -67,7 +112,6 @@ export type PollOptions = {
   onUpdate?: (job: JobRow) => void;
 };
 
-/** Poll GET /jobs/:id until succeeded or failed (async generation). */
 export async function pollJobUntilDone(
   accessToken: string,
   jobId: string,
@@ -119,22 +163,6 @@ export async function pollJobUntilDone(
   }
 }
 
-function jobToResultIfDone(job: JobRow): GenerateResult | null {
-  if (job.status !== "succeeded" || !job.result_url) return null;
-  return {
-    id: job.id,
-    type: job.type,
-    status: "succeeded",
-    url: job.result_url,
-    seed: job.seed,
-    inferenceMs: job.inference_ms,
-  };
-}
-
-/**
- * POST generate then, if 202/running, poll /jobs/:id until done.
- * Handles both async (production) and sync (local) API modes.
- */
 export async function generateAndWait(
   accessToken: string,
   kind: "image" | "video",
@@ -209,5 +237,3 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     );
   });
 }
-
-export { jobToResultIfDone };

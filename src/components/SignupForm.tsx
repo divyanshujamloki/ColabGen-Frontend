@@ -3,37 +3,35 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useState } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { signup } from "@/lib/api/client";
+import { ApiError } from "@/lib/api/types";
+import { saveSession } from "@/lib/auth/session";
 
 export function SignupForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
-    setMessage(null);
     setLoading(true);
-    const supabase = createClient();
-    const { data, error: err } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-    setLoading(false);
-    if (err) {
-      setError(err.message);
-      return;
-    }
-    if (data.session) {
+    try {
+      const session = await signup(email, password);
+      saveSession(session);
       router.push("/generate");
       router.refresh();
-      return;
+    } catch (err) {
+      setError(
+        err instanceof ApiError || err instanceof Error
+          ? err.message
+          : "Sign up failed",
+      );
+    } finally {
+      setLoading(false);
     }
-    setMessage("Check your email to confirm your account, then sign in.");
   }
 
   return (
@@ -70,11 +68,6 @@ export function SignupForm() {
       {error ? (
         <p className="text-sm text-danger" role="alert">
           {error}
-        </p>
-      ) : null}
-      {message ? (
-        <p className="text-sm text-accent" role="status">
-          {message}
         </p>
       ) : null}
       <button
