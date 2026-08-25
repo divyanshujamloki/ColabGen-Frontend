@@ -43,7 +43,7 @@ export default function HistoryPage() {
         History
       </h1>
       <p className="mb-8 max-w-xl text-muted">
-        Your recent jobs from the API (<code className="text-accent">GET /jobs</code>).
+        Your recent generation jobs.
       </p>
 
       {loading ? (

@@ -7,8 +7,8 @@ export default function GeneratePage() {
         Generate
       </h1>
       <p className="mb-8 max-w-xl text-muted">
-        Run SDXL Turbo images or a short text-to-video clip through the Colab
-        worker. Results upload to Cloudinary and land in your history.
+        Create AI-generated images and videos from text descriptions. 
+        Results are saved to your history.
       </p>
       <GenerateForm />
     </div>

@@ -29,6 +29,7 @@ export type VideoGenerateBody = {
   steps?: number;
   fps?: number;
   seed?: number | null;
+  guidance_scale?: number;
 };
 
 export type GenerateAccepted = {

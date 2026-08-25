@@ -14,10 +14,10 @@ export function GenerateForm() {
   const [mode, setMode] = useState<Mode>("image");
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [steps, setSteps] = useState(4);
+  const [steps, setSteps] = useState(25);
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
-  const [guidance, setGuidance] = useState(0);
+  const [guidance, setGuidance] = useState(7.5);
   const [fps, setFps] = useState(8);
   const [seed, setSeed] = useState("");
   const [loading, setLoading] = useState(false);
@@ -81,6 +81,7 @@ export function GenerateForm() {
                 negative_prompt: negativePrompt || null,
                 steps,
                 fps,
+                guidance_scale: guidance,
                 seed: seedNum,
               },
               pollOpts,
@@ -90,8 +91,21 @@ export function GenerateForm() {
       setStatusText(null);
     } catch (err) {
       if (err instanceof ApiError) {
+        let message = err.message;
+        // Simplify 422 validation errors
+        if (err.status === 422 && err.details) {
+          const details = err.details as any;
+          if (Array.isArray(details?.detail)) {
+            const fields = details.detail
+              .map((d: any) => d.loc?.[1] || d.msg)
+              .filter(Boolean);
+            if (fields.length > 0) {
+              message = `Invalid parameters: ${fields.join(", ")}. Please check your input values.`;
+            }
+          }
+        }
         setError(
-          err.jobId ? `${err.message} (job ${err.jobId})` : err.message,
+          err.jobId ? `${message} (job ${err.jobId})` : message,
         );
       } else if (err instanceof Error) {
         if (err.message !== "Polling cancelled") {
@@ -109,7 +123,8 @@ export function GenerateForm() {
   function switchMode(next: Mode) {
     if (loading) return;
     setMode(next);
-    setSteps(next === "image" ? 4 : 10);
+    setSteps(25);
+    setGuidance(next === "image" ? 7.5 : 9.0);
     setError(null);
   }
 
@@ -170,14 +185,14 @@ export function GenerateForm() {
 
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           <Field
-            label={`Steps (${mode === "image" ? "1–8" : "10–40"})`}
+            label={`Steps (${mode === "image" ? "15–50" : "10–40"})`}
             id="steps"
           >
             <input
               id="steps"
               type="number"
-              min={mode === "image" ? 1 : 10}
-              max={mode === "image" ? 8 : 40}
+              min={mode === "image" ? 15 : 10}
+              max={mode === "image" ? 50 : 40}
               value={steps}
               onChange={(e) => setSteps(Number(e.target.value))}
               disabled={loading}
@@ -227,18 +242,33 @@ export function GenerateForm() {
               </Field>
             </>
           ) : (
-            <Field label="FPS (4–12)" id="fps">
-              <input
-                id="fps"
-                type="number"
-                min={4}
-                max={12}
-                value={fps}
-                onChange={(e) => setFps(Number(e.target.value))}
-                disabled={loading}
-                className={inputClass}
-              />
-            </Field>
+            <>
+              <Field label="FPS (4–12)" id="fps">
+                <input
+                  id="fps"
+                  type="number"
+                  min={4}
+                  max={12}
+                  value={fps}
+                  onChange={(e) => setFps(Number(e.target.value))}
+                  disabled={loading}
+                  className={inputClass}
+                />
+              </Field>
+              <Field label="Guidance" id="guidance">
+                <input
+                  id="guidance"
+                  type="number"
+                  min={1}
+                  max={20}
+                  step={0.5}
+                  value={guidance}
+                  onChange={(e) => setGuidance(Number(e.target.value))}
+                  disabled={loading}
+                  className={inputClass}
+                />
+              </Field>
+            </>
           )}
           <Field label="Seed (optional)" id="seed">
             <input
@@ -272,9 +302,7 @@ export function GenerateForm() {
             : `Generate ${mode}`}
         </button>
         <p className="text-xs text-muted">
-          Production API returns 202 and we poll{" "}
-          <code className="text-accent">/jobs/:id</code> until done. Do not run
-          image and video at the same time on one GPU.
+          Generation typically takes 10-30 seconds depending on complexity.
         </p>
       </form>
 
@@ -289,7 +317,7 @@ export function GenerateForm() {
               aria-hidden
             />
             <p className="text-sm text-center">
-              {statusText ?? "Waiting for Colab + Cloudinary…"}
+              {statusText ?? "Processing…"}
             </p>
           </div>
         ) : result ? (

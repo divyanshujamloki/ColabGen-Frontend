@@ -36,11 +36,9 @@ export function HealthBadge() {
   const label = error
     ? "API offline"
     : !health
-      ? "Checking GPU…"
+      ? "Checking…"
       : gpuOk
-        ? health.gpu?.device
-          ? `GPU · ${health.gpu.device}`
-          : "GPU online"
+        ? "GPU ready"
         : "GPU offline";
 
   const tone = error
