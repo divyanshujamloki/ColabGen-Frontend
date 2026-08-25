@@ -85,12 +85,14 @@ npm run dev   # http://localhost:3001
 
 Set API `CORS_ORIGIN` to include `http://localhost:3001` when developing against the live API.
 
-## Deploy (Render)
+## Deploy (Netlify)
 
-1. Push this repo; Render → **New** → **Blueprint** (`render.yaml`).
-2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` before build.
-3. On API service, set `CORS_ORIGIN` to the frontend URL.
-4. Add frontend URL to Supabase Auth Site URL / Redirect URLs.
+Private GitHub repos are supported on Netlify free when you connect via GitHub OAuth.
+
+1. Netlify → **Add site** → Import `ColabGen-Frontend` (`netlify.toml`).
+2. Set env before build: `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+3. On the API (Render), set `CORS_ORIGIN` to the Netlify URL.
+4. Add the Netlify URL to Supabase Auth Site URL / Redirect URLs.
 
 ## Known limits
 
