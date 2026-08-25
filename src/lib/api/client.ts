@@ -118,7 +118,7 @@ export async function pollJobUntilDone(
   options: PollOptions = {},
 ): Promise<GenerateResult> {
   const intervalMs = options.intervalMs ?? 2000;
-  const timeoutMs = options.timeoutMs ?? 10 * 60 * 1000;
+  const timeoutMs = options.timeoutMs ?? 20 * 60 * 1000;
   const started = Date.now();
 
   while (true) {
