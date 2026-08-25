@@ -1,0 +1,21 @@
+# Render Blueprint — ColabGen / GPUBridge frontend
+# https://dashboard.render.com → New → Blueprint → this repo
+
+services:
+  - type: web
+    name: colabgen-frontend
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # Must be present at build time (inlined into the client bundle)
+      - key: NEXT_PUBLIC_API_BASE_URL
+        value: https://colabgen.onrender.com
+      - key: NEXT_PUBLIC_SUPABASE_URL
+        sync: false
+      - key: NEXT_PUBLIC_SUPABASE_ANON_KEY
+        sync: false

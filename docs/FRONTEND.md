@@ -1,6 +1,6 @@
 # GPUBridge Frontend
 
-Next.js (App Router) + TypeScript client for the GPUBridge Express API and Supabase Auth.
+Next.js (App Router) + TypeScript client for the GPUBridge / ColabGen Express API and Supabase Auth.
 
 ## Product overview
 
@@ -24,9 +24,7 @@ Copy `.env.example` → `.env.local`:
 |----------|-------------|
 | `NEXT_PUBLIC_SUPABASE_URL` | Same project as the API (`SUPABASE_URL`) |
 | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase anon key (never service_role) |
-| `NEXT_PUBLIC_API_BASE_URL` | Express base URL, e.g. `http://localhost:3000` |
-
-Frontend only uses public anon credentials. Express keeps service role, Cloudinary, and GPU worker secrets.
+| `NEXT_PUBLIC_API_BASE_URL` | Express base — local `http://localhost:3000` or `https://colabgen.onrender.com` |
 
 ## Architecture
 
@@ -46,13 +44,15 @@ Browser
 3. Protected routes (`/generate`, `/history`) redirect to `/login` if unauthenticated.
 4. Generate calls send `Authorization: Bearer <access_token>` from the session.
 
-### Generate flow
+### Generate flow (async — production / Render)
+
+Production API uses `ASYNC_GENERATION=1` (default when `NODE_ENV=production`):
 
 1. Optional: `GET /health` — show GPU online/offline.
-2. `POST /generate/image` or `POST /generate/video` with JSON body (see API contract).
-3. Request stays open until Colab finishes and Cloudinary upload completes (synchronous).
-4. Response: `{ id, type, status, url, seed, inferenceMs }`.
-5. UI shows image or video preview; job also appears in history.
+2. `POST /generate/image|video` → **202** `{ id, type, status: "running" }`.
+3. Poll `GET /jobs/:id` every ~2s until `status` is `succeeded` or `failed`.
+4. On success, media is at **`result_url`** (snake_case on the job row).
+5. Local sync mode (`ASYNC_GENERATION=0`) may still return **200** with `{ url, … }` — the client handles both.
 
 ### History flow
 
@@ -62,74 +62,39 @@ Browser
 
 ## API contract (Express)
 
-Base: `NEXT_PUBLIC_API_BASE_URL` (default local `http://localhost:3000`).
+Base: `NEXT_PUBLIC_API_BASE_URL` (production: `https://colabgen.onrender.com`).
 
-Auth header for generate/jobs: `Authorization: Bearer <supabase_access_token>`.
-
-Error shape: `{ "error": "string", "jobId"?: "uuid" }`.  
-Validation: `400` `{ "error": "Invalid body", "details": ... }`.  
-Unauthorized: `401`.
+Auth: `Authorization: Bearer <supabase_access_token>`.
 
 | Method | Path | Auth | Notes |
 |--------|------|------|-------|
 | GET | `/health` | no | `{ ok, gpu }` |
-| POST | `/generate/image` | yes | SDXL Turbo; steps 1–8 |
-| POST | `/generate/video` | yes | ~2s clip; steps 10–40 |
-| GET | `/jobs/:id` | yes | Own job only |
+| POST | `/generate/image` | yes | **202** async or **200** sync |
+| POST | `/generate/video` | yes | same |
+| GET | `/jobs/:id` | yes | Poll until done; use `result_url` |
 
-Full field tables: sibling repo [`GPUBridge/docs/API.md`](../../GPUBridge/docs/API.md). Swagger: `http://localhost:3000/docs`.
-
-### Image body
-
-| Field | Required | Constraints |
-|-------|----------|-------------|
-| `prompt` | yes | 1–2000 chars |
-| `negative_prompt` | no | string |
-| `steps` | no | 1–8, default 4 |
-| `seed` | no | int |
-| `width` / `height` | no | 256–1024, default 512 |
-| `guidance_scale` | no | 0–15; use **0** for Turbo |
-
-### Video body
-
-| Field | Required | Constraints |
-|-------|----------|-------------|
-| `prompt` | yes | 1–2000 chars |
-| `negative_prompt` | no | string |
-| `steps` | no | 10–40, default 10 |
-| `fps` | no | 4–12, default 8 |
-| `seed` | no | int |
+Swagger: https://colabgen.onrender.com/docs
 
 ## Local run
 
-Prerequisites:
-
-1. Supabase project with `public.jobs` migration applied.
-2. Express API running (`apps/api`, port 3000) with CORS allowing this origin.
-3. Colab GPU worker + `GPU_WORKER_URL` when generating for real.
-
-Frontend:
-
 ```bash
-cd GPUBridge_frontend
-cp .env.example .env.local   # fill values
+cp .env.example .env.local
 npm install
-npm run dev                  # http://localhost:3001
+npm run dev   # http://localhost:3001
 ```
 
-API (sibling):
+Set API `CORS_ORIGIN` to include `http://localhost:3001` when developing against the live API.
 
-```bash
-cd GPUBridge/apps/api
-npm run dev                  # http://localhost:3000
-```
+## Deploy (Render)
 
-Set `CORS_ORIGIN=http://localhost:3001` on the API (or rely on the default local allowlist).
+1. Push this repo; Render → **New** → **Blueprint** (`render.yaml`).
+2. Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` before build.
+3. On API service, set `CORS_ORIGIN` to the frontend URL.
+4. Add frontend URL to Supabase Auth Site URL / Redirect URLs.
 
 ## Known limits
 
-- Generate is **synchronous** — expect 10s+ for image, longer for video; keep the tab open.
-- One Colab T4: do **not** run image and video at the same time (UI disables the other modality while generating).
-- If `/health` shows `gpu.ok: false`, generation will fail until the worker/ngrok is back.
-- History uses Supabase RLS directly; there is no Express `GET /jobs` list in v1.
-- Email confirmation: if Supabase requires email confirm, users must confirm before sign-in works.
+- Production generate is **async** — UI polls `/jobs/:id` (up to ~10 minutes).
+- One Colab T4: do not run image and video at the same time.
+- Render free tier sleeps after idle; first request may cold-start.
+- No Express `GET /jobs` list — history uses Supabase RLS.

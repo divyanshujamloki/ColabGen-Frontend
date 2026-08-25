@@ -1,5 +1,7 @@
 import {
   ApiError,
+  type GenerateAccepted,
+  type GenerateResponse,
   type GenerateResult,
   type HealthResponse,
   type ImageGenerateBody,
@@ -44,36 +46,6 @@ export async function getHealth(): Promise<HealthResponse> {
   return parseJson<HealthResponse>(res);
 }
 
-export async function generateImage(
-  accessToken: string,
-  body: ImageGenerateBody,
-): Promise<GenerateResult> {
-  const res = await fetch(`${baseUrl()}/generate/image`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  return parseJson<GenerateResult>(res);
-}
-
-export async function generateVideo(
-  accessToken: string,
-  body: VideoGenerateBody,
-): Promise<GenerateResult> {
-  const res = await fetch(`${baseUrl()}/generate/video`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${accessToken}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(body),
-  });
-  return parseJson<GenerateResult>(res);
-}
-
 export async function getJob(
   accessToken: string,
   id: string,
@@ -87,3 +59,155 @@ export async function getJob(
   });
   return parseJson<JobRow>(res);
 }
+
+export type PollOptions = {
+  intervalMs?: number;
+  timeoutMs?: number;
+  signal?: AbortSignal;
+  onUpdate?: (job: JobRow) => void;
+};
+
+/** Poll GET /jobs/:id until succeeded or failed (async generation). */
+export async function pollJobUntilDone(
+  accessToken: string,
+  jobId: string,
+  options: PollOptions = {},
+): Promise<GenerateResult> {
+  const intervalMs = options.intervalMs ?? 2000;
+  const timeoutMs = options.timeoutMs ?? 10 * 60 * 1000;
+  const started = Date.now();
+
+  while (true) {
+    if (options.signal?.aborted) {
+      throw new Error("Polling cancelled");
+    }
+    if (Date.now() - started > timeoutMs) {
+      throw new ApiError(408, {
+        error: "Timed out waiting for job",
+        jobId,
+      });
+    }
+
+    const job = await getJob(accessToken, jobId);
+    options.onUpdate?.(job);
+
+    if (job.status === "succeeded") {
+      if (!job.result_url) {
+        throw new ApiError(500, {
+          error: "Job succeeded but result_url is missing",
+          jobId,
+        });
+      }
+      return {
+        id: job.id,
+        type: job.type,
+        status: "succeeded",
+        url: job.result_url,
+        seed: job.seed,
+        inferenceMs: job.inference_ms,
+      };
+    }
+
+    if (job.status === "failed") {
+      throw new ApiError(500, {
+        error: job.error || "Generation failed",
+        jobId: job.id,
+      });
+    }
+
+    await sleep(intervalMs, options.signal);
+  }
+}
+
+function jobToResultIfDone(job: JobRow): GenerateResult | null {
+  if (job.status !== "succeeded" || !job.result_url) return null;
+  return {
+    id: job.id,
+    type: job.type,
+    status: "succeeded",
+    url: job.result_url,
+    seed: job.seed,
+    inferenceMs: job.inference_ms,
+  };
+}
+
+/**
+ * POST generate then, if 202/running, poll /jobs/:id until done.
+ * Handles both async (production) and sync (local) API modes.
+ */
+export async function generateAndWait(
+  accessToken: string,
+  kind: "image" | "video",
+  body: ImageGenerateBody | VideoGenerateBody,
+  options: PollOptions = {},
+): Promise<GenerateResult> {
+  const path =
+    kind === "image" ? "/generate/image" : "/generate/video";
+  const res = await fetch(`${baseUrl()}${path}`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  const data = await parseJson<GenerateResponse>(res);
+
+  if (data.status === "succeeded") {
+    return data;
+  }
+
+  const accepted = data as GenerateAccepted;
+  options.onUpdate?.({
+    id: accepted.id,
+    user_id: "",
+    type: accepted.type,
+    status: "running",
+    prompt: "",
+    result_url: null,
+    seed: null,
+    inference_ms: null,
+    error: null,
+    created_at: new Date().toISOString(),
+  });
+
+  return pollJobUntilDone(accessToken, accepted.id, options);
+}
+
+export async function generateImage(
+  accessToken: string,
+  body: ImageGenerateBody,
+  options?: PollOptions,
+): Promise<GenerateResult> {
+  return generateAndWait(accessToken, "image", body, options);
+}
+
+export async function generateVideo(
+  accessToken: string,
+  body: VideoGenerateBody,
+  options?: PollOptions,
+): Promise<GenerateResult> {
+  return generateAndWait(accessToken, "video", body, options);
+}
+
+function sleep(ms: number, signal?: AbortSignal): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(new Error("Polling cancelled"));
+      return;
+    }
+    const t = setTimeout(resolve, ms);
+    signal?.addEventListener(
+      "abort",
+      () => {
+        clearTimeout(t);
+        reject(new Error("Polling cancelled"));
+      },
+      { once: true },
+    );
+  });
+}
+
+export { jobToResultIfDone };

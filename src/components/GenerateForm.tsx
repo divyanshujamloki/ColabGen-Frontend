@@ -1,6 +1,6 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useRef, useState } from "react";
 import { generateImage, generateVideo } from "@/lib/api/client";
 import { ApiError, type GenerateResult } from "@/lib/api/types";
 import { createClient } from "@/lib/supabase/client";
@@ -21,14 +21,21 @@ export function GenerateForm() {
   const [fps, setFps] = useState(8);
   const [seed, setSeed] = useState("");
   const [loading, setLoading] = useState(false);
+  const [statusText, setStatusText] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<GenerateResult | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
     setError(null);
     setResult(null);
     setLoading(true);
+    setStatusText("Submitting job…");
+
+    abortRef.current?.abort();
+    const ac = new AbortController();
+    abortRef.current = ac;
 
     try {
       const supabase = createClient();
@@ -44,36 +51,59 @@ export function GenerateForm() {
         throw new Error("Seed must be an integer");
       }
 
+      const pollOpts = {
+        signal: ac.signal,
+        onUpdate: (job: { id: string; status: string }) => {
+          setStatusText(
+            job.status === "running"
+              ? `Job ${job.id.slice(0, 8)}… running (polling)`
+              : `Job ${job.status}`,
+          );
+        },
+      };
+
       const data =
         mode === "image"
-          ? await generateImage(session.access_token, {
-              prompt,
-              negative_prompt: negativePrompt || null,
-              steps,
-              width,
-              height,
-              guidance_scale: guidance,
-              seed: seedNum,
-            })
-          : await generateVideo(session.access_token, {
-              prompt,
-              negative_prompt: negativePrompt || null,
-              steps,
-              fps,
-              seed: seedNum,
-            });
+          ? await generateImage(
+              session.access_token,
+              {
+                prompt,
+                negative_prompt: negativePrompt || null,
+                steps,
+                width,
+                height,
+                guidance_scale: guidance,
+                seed: seedNum,
+              },
+              pollOpts,
+            )
+          : await generateVideo(
+              session.access_token,
+              {
+                prompt,
+                negative_prompt: negativePrompt || null,
+                steps,
+                fps,
+                seed: seedNum,
+              },
+              pollOpts,
+            );
 
       setResult(data);
+      setStatusText(null);
     } catch (err) {
       if (err instanceof ApiError) {
         setError(
           err.jobId ? `${err.message} (job ${err.jobId})` : err.message,
         );
       } else if (err instanceof Error) {
-        setError(err.message);
+        if (err.message !== "Polling cancelled") {
+          setError(err.message);
+        }
       } else {
         setError("Generation failed");
       }
+      setStatusText(null);
     } finally {
       setLoading(false);
     }
@@ -241,12 +271,13 @@ export function GenerateForm() {
           }`}
         >
           {loading
-            ? `Generating ${mode}… (this can take a while)`
+            ? `Generating ${mode}…`
             : `Generate ${mode}`}
         </button>
         <p className="text-xs text-muted">
-          Generation is synchronous. Do not run image and video at the same time
-          on one GPU.
+          Production API returns 202 and we poll{" "}
+          <code className="text-accent">/jobs/:id</code> until done. Do not run
+          image and video at the same time on one GPU.
         </p>
       </form>
 
@@ -260,7 +291,9 @@ export function GenerateForm() {
               className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin-ring"
               aria-hidden
             />
-            <p className="text-sm">Waiting for Colab + Cloudinary…</p>
+            <p className="text-sm text-center">
+              {statusText ?? "Waiting for Colab + Cloudinary…"}
+            </p>
           </div>
         ) : result ? (
           <div className="flex flex-1 flex-col gap-3 animate-fade-up">

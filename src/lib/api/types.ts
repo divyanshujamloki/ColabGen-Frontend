@@ -31,7 +31,15 @@ export type VideoGenerateBody = {
   seed?: number | null;
 };
 
-export type GenerateResult = {
+/** Async accept (HTTP 202) when ASYNC_GENERATION is on (production / Render). */
+export type GenerateAccepted = {
+  id: string;
+  type: JobType;
+  status: "running";
+};
+
+/** Sync success (HTTP 200) when async is off. */
+export type GenerateSucceeded = {
   id: string;
   type: JobType;
   status: "succeeded";
@@ -39,6 +47,10 @@ export type GenerateResult = {
   seed: string | null;
   inferenceMs: number | null;
 };
+
+export type GenerateResult = GenerateSucceeded;
+
+export type GenerateResponse = GenerateAccepted | GenerateSucceeded;
 
 export type JobRow = {
   id: string;

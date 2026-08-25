@@ -1,35 +1,32 @@
-# GPUBridge Frontend
+# GPUBridge / ColabGen Frontend
 
-Professional Next.js + TypeScript UI for [GPUBridge](../GPUBridge): Supabase Auth, image/video generation, and job history.
+Next.js + TypeScript UI for [ColabGen API](https://colabgen.onrender.com): Supabase Auth, async image/video generation, job history.
 
 ## Quick start
 
-1. Copy env and fill values (same Supabase project as the API):
+```bash
+cp .env.example .env.local
+npm install
+npm run dev   # http://localhost:3001
+```
 
-   ```bash
-   cp .env.example .env.local
-   ```
+Production API: `https://colabgen.onrender.com` (async: **202** + poll `/jobs/:id`).
 
-2. Install and run (port **3001** so it does not clash with the API on 3000):
+## Deploy on Render
 
-   ```bash
-   npm install
-   npm run dev
-   ```
+1. Connect this GitHub repo → Blueprint (`render.yaml`) or **New Web Service**.
+2. Build: `npm ci && npm run build` · Start: `npm start`
+3. Env (required at **build** time):
 
-3. Open [http://localhost:3001](http://localhost:3001).
+| Key | Value |
+|-----|--------|
+| `NEXT_PUBLIC_API_BASE_URL` | `https://colabgen.onrender.com` |
+| `NEXT_PUBLIC_SUPABASE_URL` | your Supabase URL |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | anon key |
 
-4. Keep the Express API running (`GPUBridge/apps/api`, port 3000) with CORS allowing `http://localhost:3001`, and the Colab worker up when generating.
+4. On the API Render service, set `CORS_ORIGIN` to this frontend’s URL.
+5. Add the frontend URL in Supabase Auth redirect allowlist.
 
 ## Docs
 
-Full architecture, flows, and API contract: [`docs/FRONTEND.md`](docs/FRONTEND.md).
-
-Backend API reference: [`GPUBridge/docs/API.md`](../GPUBridge/docs/API.md).
-
-## Stack
-
-- Next.js App Router + TypeScript
-- Tailwind CSS
-- Supabase Auth (`@supabase/ssr`)
-- Express generate API (Bearer JWT)
+[`docs/FRONTEND.md`](docs/FRONTEND.md)
