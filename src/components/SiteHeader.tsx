@@ -39,6 +39,12 @@ export function SiteHeader() {
                 Generate
               </Link>
               <Link
+                href="/map-editor"
+                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
+              >
+                Map
+              </Link>
+              <Link
                 href="/history"
                 className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
               >

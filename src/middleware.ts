@@ -5,7 +5,9 @@ export function middleware(request: NextRequest) {
   const path = request.nextUrl.pathname;
   const authed = hasSessionCookie(request.headers.get("cookie"));
   const isProtected =
-    path.startsWith("/generate") || path.startsWith("/history");
+    path.startsWith("/generate") ||
+    path.startsWith("/history") ||
+    path.startsWith("/map-editor");
   const isAuthPage = path === "/login" || path === "/signup";
 
   if (isProtected && !authed) {

@@ -7,6 +7,7 @@ import {
   type HealthResponse,
   type ImageGenerateBody,
   type JobRow,
+  type MapGenerateBody,
   type VideoGenerateBody,
 } from "./types";
 
@@ -218,6 +219,44 @@ export async function generateVideo(
   options?: PollOptions,
 ): Promise<GenerateResult> {
   return generateAndWait(accessToken, "video", body, options);
+}
+
+export async function generateMap(
+  accessToken: string,
+  body: MapGenerateBody,
+  options: PollOptions = {},
+): Promise<GenerateResult> {
+  const res = await fetch(`${baseUrl()}/generate/map`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+    signal: options.signal,
+  });
+
+  const data = await parseJson<GenerateResponse>(res);
+
+  if (data.status === "succeeded") {
+    return data;
+  }
+
+  const accepted = data as GenerateAccepted;
+  options.onUpdate?.({
+    id: accepted.id,
+    user_id: "",
+    type: "map",
+    status: "running",
+    prompt: "",
+    result_url: null,
+    seed: null,
+    inference_ms: null,
+    error: null,
+    created_at: new Date().toISOString(),
+  });
+
+  return pollJobUntilDone(accessToken, accepted.id, options);
 }
 
 function sleep(ms: number, signal?: AbortSignal): Promise<void> {

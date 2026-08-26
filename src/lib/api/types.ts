@@ -1,4 +1,4 @@
-export type JobType = "image" | "video";
+export type JobType = "image" | "video" | "map";
 export type JobStatus = "running" | "succeeded" | "failed";
 
 export type HealthResponse = {
@@ -30,6 +30,33 @@ export type VideoGenerateBody = {
   fps?: number;
   seed?: number | null;
   guidance_scale?: number;
+};
+
+export type MapPin = {
+  id: string;
+  lat: number;
+  lng: number;
+  label: string;
+  caption?: string;
+  timestamp?: number;
+  captionOffsetX?: number;
+  captionOffsetY?: number;
+};
+
+export type MapPath = {
+  from: string;
+  to: string;
+  style?: "arrow" | "dashed" | "solid";
+};
+
+export type MapGenerateBody = {
+  pins: MapPin[];
+  paths: MapPath[];
+  style?: {
+    mapStyle?: "streets" | "satellite" | "light";
+    duration?: number;
+    fps?: number;
+  };
 };
 
 export type GenerateAccepted = {
