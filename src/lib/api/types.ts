@@ -1,4 +1,4 @@
-export type JobType = "image" | "video" | "map";
+export type JobType = "image" | "video" | "map" | "img2img";
 export type JobStatus = "running" | "succeeded" | "failed";
 
 export type HealthResponse = {
@@ -30,6 +30,33 @@ export type VideoGenerateBody = {
   fps?: number;
   seed?: number | null;
   guidance_scale?: number;
+};
+
+export type Img2ImgGenerateBody = {
+  prompt: string;
+  image_base64: string;
+  negative_prompt?: string | null;
+  steps?: number;
+  guidance_scale?: number;
+  image_guidance_scale?: number;
+  seed?: number | null;
+};
+
+export type ChatMessage = {
+  role: "user" | "assistant" | "system";
+  content: string;
+};
+
+export type ChatRequest = {
+  messages: ChatMessage[];
+  max_tokens?: number;
+  temperature?: number;
+};
+
+export type ChatResponse = {
+  response: string;
+  tokens: number;
+  inferenceMs: number;
 };
 
 export type MapPin = {

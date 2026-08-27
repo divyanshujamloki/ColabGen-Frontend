@@ -39,6 +39,18 @@ export function SiteHeader() {
                 Generate
               </Link>
               <Link
+                href="/chat"
+                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
+              >
+                Chat
+              </Link>
+              <Link
+                href="/image-editor"
+                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
+              >
+                Edit
+              </Link>
+              <Link
                 href="/map-editor"
                 className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
               >

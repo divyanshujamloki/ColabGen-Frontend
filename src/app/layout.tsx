@@ -22,7 +22,7 @@ const mono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   title: "GPUBridge",
-  description: "Generate images and short videos on Colab GPU via GPUBridge.",
+  description: "Generate images, videos, chat, and image edits on Colab GPU via GPUBridge.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

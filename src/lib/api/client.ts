@@ -6,8 +6,11 @@ import {
   type GenerateResult,
   type HealthResponse,
   type ImageGenerateBody,
+  type Img2ImgGenerateBody,
   type JobRow,
   type MapGenerateBody,
+  type ChatRequest,
+  type ChatResponse,
   type VideoGenerateBody,
 } from "./types";
 
@@ -166,12 +169,16 @@ export async function pollJobUntilDone(
 
 export async function generateAndWait(
   accessToken: string,
-  kind: "image" | "video",
-  body: ImageGenerateBody | VideoGenerateBody,
+  kind: "image" | "video" | "img2img",
+  body: ImageGenerateBody | VideoGenerateBody | Img2ImgGenerateBody,
   options: PollOptions = {},
 ): Promise<GenerateResult> {
   const path =
-    kind === "image" ? "/generate/image" : "/generate/video";
+    kind === "image"
+      ? "/generate/image"
+      : kind === "video"
+        ? "/generate/video"
+        : "/generate/img2img";
   const res = await fetch(`${baseUrl()}${path}`, {
     method: "POST",
     headers: {
@@ -219,6 +226,29 @@ export async function generateVideo(
   options?: PollOptions,
 ): Promise<GenerateResult> {
   return generateAndWait(accessToken, "video", body, options);
+}
+
+export async function generateImg2Img(
+  accessToken: string,
+  body: Img2ImgGenerateBody,
+  options?: PollOptions,
+): Promise<GenerateResult> {
+  return generateAndWait(accessToken, "img2img", body, options);
+}
+
+export async function sendChatMessage(
+  accessToken: string,
+  request: ChatRequest,
+): Promise<ChatResponse> {
+  const res = await fetch(`${baseUrl()}/chat`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(request),
+  });
+  return parseJson<ChatResponse>(res);
 }
 
 export async function generateMap(

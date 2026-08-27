@@ -71,7 +71,7 @@ export default function HistoryPage() {
             >
               <div className="h-24 w-full shrink-0 overflow-hidden rounded-md bg-black/40 sm:w-36">
                 {job.status === "succeeded" && job.result_url ? (
-                  job.type === "image" ? (
+                  job.type === "image" || job.type === "img2img" ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
                       src={job.result_url}
