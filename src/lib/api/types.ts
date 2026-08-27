@@ -1,4 +1,4 @@
-export type JobType = "image" | "video" | "map" | "img2img";
+export type JobType = "image" | "video" | "map" | "img2img" | "tts";
 export type JobStatus = "running" | "succeeded" | "failed";
 
 export type HealthResponse = {
@@ -7,6 +7,9 @@ export type HealthResponse = {
     ok?: boolean;
     pipe?: boolean;
     video_pipe?: boolean;
+    chat_model?: boolean;
+    img2img_pipe?: boolean;
+    tts_model?: boolean;
     device?: string;
     port?: number;
     mock?: boolean;
@@ -57,6 +60,22 @@ export type ChatResponse = {
   response: string;
   tokens: number;
   inferenceMs: number;
+};
+
+export type TtsRequest = {
+  text: string;
+  speaker_wav_base64?: string;
+  language?: string;
+};
+
+export type TtsResponse = {
+  id: string;
+  type: "tts";
+  status: "succeeded";
+  url: string;
+  audio_base64: string;
+  format: "wav" | "mp3";
+  inference_ms: number;
 };
 
 export type MapPin = {

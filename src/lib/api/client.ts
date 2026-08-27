@@ -11,6 +11,8 @@ import {
   type MapGenerateBody,
   type ChatRequest,
   type ChatResponse,
+  type TtsRequest,
+  type TtsResponse,
   type VideoGenerateBody,
 } from "./types";
 
@@ -249,6 +251,21 @@ export async function sendChatMessage(
     body: JSON.stringify(request),
   });
   return parseJson<ChatResponse>(res);
+}
+
+export async function generateTts(
+  accessToken: string,
+  body: TtsRequest,
+): Promise<TtsResponse> {
+  const res = await fetch(`${baseUrl()}/tts`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  return parseJson<TtsResponse>(res);
 }
 
 export async function generateMap(

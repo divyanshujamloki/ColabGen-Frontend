@@ -45,6 +45,12 @@ export function SiteHeader() {
                 Chat
               </Link>
               <Link
+                href="/voice"
+                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
+              >
+                Voice
+              </Link>
+              <Link
                 href="/image-editor"
                 className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground"
               >

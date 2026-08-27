@@ -78,6 +78,17 @@ export default function HistoryPage() {
                       alt=""
                       className="h-full w-full object-cover"
                     />
+                  ) : job.type === "tts" ? (
+                    <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
+                      <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
+                        Audio
+                      </span>
+                      <audio
+                        src={job.result_url}
+                        controls
+                        className="h-8 w-full max-w-full"
+                      />
+                    </div>
                   ) : (
                     <video
                       src={job.result_url}
