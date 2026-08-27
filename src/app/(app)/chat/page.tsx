@@ -8,8 +8,8 @@ export default function ChatPage() {
           AI Chat
         </h1>
         <p className="max-w-xl text-muted">
-          Chat with your in-house model on Colab GPU. No external API — runs locally
-          on your free GPU worker.
+          Chat with your in-house BridgeGPU model. No external API — runs on your
+          own GPU worker.
         </p>
       </div>
       <ChatInterface />

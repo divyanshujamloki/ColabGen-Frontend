@@ -21,7 +21,7 @@ export default function HomePage() {
             GPUBridge
           </p>
           <h1 className="animate-fade-up-delay max-w-2xl font-[family-name:var(--font-display)] text-2xl font-medium leading-snug text-foreground/90 sm:text-3xl">
-            Image and video generation on your Colab GPU — auth, jobs, and
+            Image and video generation on in-house BridgeGPU — auth, jobs, and
             Cloudinary delivery in one control plane.
           </h1>
           <p className="animate-fade-up-delay mt-4 max-w-lg text-base text-muted sm:text-lg">

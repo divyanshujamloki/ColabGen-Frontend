@@ -277,7 +277,7 @@ export function ImageEditorForm() {
           {loading ? "Editing image…" : "Apply edit"}
         </button>
         <p className="text-xs text-muted">
-          Uses InstructPix2Pix on your Colab GPU. Typically 10–30 seconds.
+          Uses InstructPix2Pix on in-house BridgeGPU. Typically 10–30 seconds.
         </p>
       </form>
 

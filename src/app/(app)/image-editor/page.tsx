@@ -7,8 +7,8 @@ export default function ImageEditorPage() {
         Image Editor
       </h1>
       <p className="mb-8 max-w-xl text-muted">
-        Upload an image and describe how to change it. InstructPix2Pix runs on your
-        Colab GPU — no external API.
+        Upload an image and describe how to change it. InstructPix2Pix runs on
+        in-house BridgeGPU — no external API.
       </p>
       <ImageEditorForm />
     </div>

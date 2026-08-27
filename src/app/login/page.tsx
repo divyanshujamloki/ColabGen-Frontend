@@ -17,7 +17,7 @@ export default function LoginPage() {
           Sign in
         </h1>
         <p className="mb-8 text-sm text-muted">
-          Sign in via the ColabGen API (
+          Sign in via the BridgeGPU API (
           <code className="text-accent">POST /auth/login</code>).
         </p>
         <Suspense fallback={<p className="text-sm text-muted">Loading…</p>}>

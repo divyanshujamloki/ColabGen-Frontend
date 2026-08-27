@@ -16,7 +16,7 @@ export default function SignupPage() {
           Create account
         </h1>
         <p className="mb-8 text-sm text-muted">
-          Creates an account via the ColabGen API (
+          Creates an account via the BridgeGPU API (
           <code className="text-accent">POST /auth/signup</code>).
         </p>
         <SignupForm />

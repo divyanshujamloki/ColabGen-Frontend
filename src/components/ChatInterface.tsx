@@ -16,7 +16,7 @@ export function ChatInterface() {
       id: "welcome",
       role: "assistant",
       content:
-        "Hi! I'm your in-house chat model running on your Colab GPU. Ask me anything — coding help, ideas, or general questions.",
+        "Hi! I'm your in-house BridgeGPU chat model. Ask me anything — coding help, ideas, or general questions.",
     },
   ]);
   const [input, setInput] = useState("");
@@ -109,7 +109,7 @@ export function ChatInterface() {
               }`}
             >
               <p className="mb-1 font-mono text-[10px] uppercase tracking-wider opacity-70">
-                {msg.role === "user" ? "You" : "In-house model"}
+                {msg.role === "user" ? "You" : "BridgeGPU"}
               </p>
               <p className="whitespace-pre-wrap break-words">{msg.content}</p>
             </div>
