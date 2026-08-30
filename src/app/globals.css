@@ -107,12 +107,17 @@ body {
   mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
 }
 
-/* Hide Netlify drawer and badges */
+/* Hide Netlify drawer, promo modals, and badges */
 #netlify-drawer-root,
 .netlify-badge,
 [data-netlify-drawer],
-iframe[src*="netlify"] {
+[id*="netlify"],
+[class*="netlify"],
+iframe[src*="netlify"],
+div:has(> iframe[src*="netlify"]) {
   display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
