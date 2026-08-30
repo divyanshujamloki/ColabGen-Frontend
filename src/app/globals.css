@@ -89,22 +89,30 @@ body {
 }
 
 .bg-atmosphere {
-  background-color: var(--bg);
-  background-image:
-    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(45, 212, 191, 0.18), transparent),
-    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(56, 120, 180, 0.12), transparent),
-    radial-gradient(ellipse 50% 35% at 0% 100%, rgba(20, 184, 166, 0.08), transparent),
-    linear-gradient(180deg, #0c1218 0%, #0a1016 100%);
+  background-color: #0b0f14;
+  background-image: 
+    radial-gradient(800px 400px at 50% 0%, rgba(45, 212, 191, 0.08), transparent 75%),
+    radial-gradient(600px 300px at 85% 10%, rgba(56, 120, 180, 0.06), transparent 70%);
+  background-attachment: fixed;
+  background-repeat: no-repeat;
 }
 
 .bg-grid {
   background-image: linear-gradient(
-      rgba(232, 238, 244, 0.03) 1px,
+      rgba(232, 238, 244, 0.025) 1px,
       transparent 1px
     ),
-    linear-gradient(90deg, rgba(232, 238, 244, 0.03) 1px, transparent 1px);
-  background-size: 48px 48px;
+    linear-gradient(90deg, rgba(232, 238, 244, 0.025) 1px, transparent 1px);
+  background-size: 40px 40px;
   mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, black, transparent);
+}
+
+/* Hide Netlify drawer and badges */
+#netlify-drawer-root,
+.netlify-badge,
+[data-netlify-drawer],
+iframe[src*="netlify"] {
+  display: none !important;
 }
 
 /* Hide scrollbar for Chrome, Safari and Opera */
