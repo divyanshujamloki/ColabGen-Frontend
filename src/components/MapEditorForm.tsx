@@ -9,6 +9,7 @@ import {
   type MapPin,
 } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 const inputClass =
   "w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
@@ -73,6 +74,7 @@ function arrowPoints(
 }
 
 export function MapEditorForm() {
+  const { deductCredits } = useCredits();
   const mapRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const dragRef = useRef<DragMode>(null);
@@ -294,6 +296,7 @@ export function MapEditorForm() {
           },
         },
       );
+      deductCredits(5, "Map Video Generation");
       setResult(data);
       setStatusText(null);
     } catch (err) {

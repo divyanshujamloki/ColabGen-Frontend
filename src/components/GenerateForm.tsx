@@ -4,6 +4,7 @@ import { FormEvent, useRef, useState } from "react";
 import { generateImage, generateVideo } from "@/lib/api/client";
 import { ApiError, type GenerateResult } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 type Mode = "image" | "video";
 
@@ -11,6 +12,7 @@ const inputClass =
   "w-full rounded-lg border border-border/80 bg-[#0c1218] px-3.5 py-2.5 text-sm text-foreground placeholder:text-muted/60 outline-none transition focus:border-accent focus:ring-1 focus:ring-accent disabled:opacity-60";
 
 export function GenerateForm() {
+  const { deductCredits } = useCredits();
   const [mode, setMode] = useState<Mode>("image");
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
@@ -59,6 +61,9 @@ export function GenerateForm() {
         },
       };
 
+      const cost = mode === "image" ? 5 : 10;
+      const opName = mode === "image" ? "Image Generation" : "Video Generation";
+
       const data =
         mode === "image"
           ? await generateImage(
@@ -87,6 +92,7 @@ export function GenerateForm() {
               pollOpts,
             );
 
+      deductCredits(cost, opName);
       setResult(data);
       setStatusText(null);
     } catch (err) {

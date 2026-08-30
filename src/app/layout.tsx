@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
+import { CreditsProvider } from "@/lib/credits/CreditsContext";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -25,14 +26,14 @@ export const metadata: Metadata = {
   description: "Generate images, videos, chat, and image edits on in-house BridgeGPU.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-atmosphere text-foreground">
-        {children}
+        <CreditsProvider>{children}</CreditsProvider>
       </body>
     </html>
   );

@@ -4,6 +4,7 @@ import { DragEvent, FormEvent, useCallback, useRef, useState } from "react";
 import { generateImg2Img } from "@/lib/api/client";
 import { ApiError, type GenerateResult } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 const inputClass =
   "w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
@@ -24,6 +25,7 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export function ImageEditorForm() {
+  const { deductCredits } = useCredits();
   const [prompt, setPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [steps, setSteps] = useState(20);
@@ -116,6 +118,7 @@ export function ImageEditorForm() {
         },
       );
 
+      deductCredits(5, "Image Editing");
       setResult(data);
       setStatusText(null);
     } catch (err) {

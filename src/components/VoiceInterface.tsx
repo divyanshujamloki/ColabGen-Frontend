@@ -4,6 +4,7 @@ import { DragEvent, FormEvent, useCallback, useRef, useState } from "react";
 import { generateTts } from "@/lib/api/client";
 import { ApiError, type TtsResponse } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 const inputClass =
   "w-full rounded-md border border-border bg-surface px-3 py-2.5 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
@@ -42,6 +43,7 @@ function fileToBase64(file: File): Promise<string> {
 }
 
 export function VoiceInterface() {
+  const { deductCredits } = useCredits();
   const [text, setText] = useState("");
   const [language, setLanguage] = useState("en");
   const [referenceFile, setReferenceFile] = useState<File | null>(null);
@@ -119,6 +121,7 @@ export function VoiceInterface() {
         language,
       });
 
+      deductCredits(5, "Voice TTS Synthesis");
       setResult(data);
       const dataUrl = `data:audio/wav;base64,${data.audio_base64}`;
       setPlaybackUrl(dataUrl);

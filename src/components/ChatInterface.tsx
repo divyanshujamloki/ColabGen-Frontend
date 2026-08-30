@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import { sendChatMessage } from "@/lib/api/client";
 import { ApiError, type ChatMessage } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 type UiMessage = ChatMessage & { id: string };
 
@@ -11,6 +12,7 @@ const inputClass =
   "w-full rounded-md border border-border bg-surface px-3 py-2.5 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
 
 export function ChatInterface() {
+  const { deductCredits } = useCredits();
   const [messages, setMessages] = useState<UiMessage[]>([
     {
       id: "welcome",
@@ -60,6 +62,7 @@ export function ChatInterface() {
         temperature: 0.7,
       });
 
+      deductCredits(5, "Chat Assistant");
       setMessages((prev) => [
         ...prev,
         {

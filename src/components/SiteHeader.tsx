@@ -3,26 +3,17 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { clearSession, getStoredEmail, getAccessToken } from "@/lib/auth/session";
-import { getMe, logout } from "@/lib/api/client";
+import { logout } from "@/lib/api/client";
 import { useEffect, useState } from "react";
+import { useCredits } from "@/lib/credits/CreditsContext";
 
 export function SiteHeader() {
   const router = useRouter();
   const [email, setEmail] = useState<string | null>(null);
-  const [credits, setCredits] = useState<number | null>(null);
+  const { credits, refreshCredits } = useCredits();
 
   useEffect(() => {
     setEmail(getStoredEmail());
-    const token = getAccessToken();
-    if (token) {
-      getMe(token)
-        .then((res) => {
-          if (res.credits !== undefined) {
-            setCredits(res.credits);
-          }
-        })
-        .catch((err) => console.error("Failed to fetch credits", err));
-    }
   }, []);
 
   async function signOut() {
@@ -32,21 +23,21 @@ export function SiteHeader() {
     }
     clearSession();
     setEmail(null);
-    setCredits(null);
     router.push("/login");
     router.refresh();
   }
 
   return (
-    <header className="relative z-10 border-b border-border/80 backdrop-blur-sm">
+    <header className="relative z-10 border-b border-border/80 backdrop-blur-md bg-[#0b0f14]/80 sticky top-0">
       <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2 transition hover:opacity-80">
+        <Link href="/" className="flex items-center gap-2 transition hover:opacity-80 shrink-0">
           <img src="/logo.png" alt="GPUBridge" className="h-8 w-auto" />
           <span className="font-[family-name:var(--font-display)] text-lg font-semibold tracking-tight text-foreground hidden sm:inline-block">
             GPUBridge
           </span>
         </Link>
-        <nav className="flex items-center gap-1 overflow-x-auto whitespace-nowrap text-sm sm:gap-3 hide-scrollbar">
+        
+        <nav className="flex items-center gap-1 overflow-x-auto whitespace-nowrap text-sm sm:gap-2.5 hide-scrollbar">
           {email ? (
             <>
               <Link
@@ -85,18 +76,26 @@ export function SiteHeader() {
               >
                 History
               </Link>
-              <span className="hidden max-w-[10rem] truncate font-mono text-xs text-muted sm:inline shrink-0">
+
+              {/* Real-Time Credits Pill */}
+              <button
+                type="button"
+                onClick={() => refreshCredits()}
+                title="Click to refresh credits balance"
+                className="flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 font-mono text-xs font-semibold text-teal-300 shadow-sm transition hover:bg-teal-500/20 active:scale-95 shrink-0"
+              >
+                <span className="text-teal-400">⚡</span>
+                <span>{credits !== null ? `${credits} Credits` : "..."}</span>
+              </button>
+
+              <span className="hidden max-w-[8rem] truncate font-mono text-xs text-muted lg:inline shrink-0">
                 {email}
-                {credits !== null && (
-                  <span className="ml-2 rounded-full bg-accent/10 px-2 py-0.5 text-accent">
-                    {credits} Credits
-                  </span>
-                )}
               </span>
+
               <button
                 type="button"
                 onClick={signOut}
-                className="rounded-md px-2.5 py-1.5 text-muted transition hover:bg-surface-soft hover:text-foreground shrink-0"
+                className="rounded-md px-2 py-1.5 text-xs text-muted transition hover:bg-surface-soft hover:text-foreground shrink-0"
               >
                 Sign out
               </button>
