@@ -31,7 +31,13 @@ async function parseJson<T>(res: Response): Promise<T> {
     try {
       body = JSON.parse(text);
     } catch {
-      body = { error: text };
+      let errorMsg = text;
+      if (text.toLowerCase().startsWith("<!doctype html") || text.toLowerCase().startsWith("<html")) {
+        errorMsg = "An unexpected server error occurred.";
+      } else if (text.length > 200) {
+        errorMsg = text.slice(0, 200) + "...";
+      }
+      body = { error: errorMsg };
     }
   }
   if (!res.ok) {
@@ -77,9 +83,21 @@ export async function login(
   return parseJson<AuthSession>(res);
 }
 
+export async function logout(accessToken: string): Promise<void> {
+  const res = await fetch(`${baseUrl()}/auth/signout`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+  if (!res.ok) {
+    // We don't throw an ApiError here so that failure to sign out
+    // on the backend doesn't prevent local clearSession.
+    console.error("Failed to sign out on server");
+  }
+}
+
 export async function getMe(
   accessToken: string,
-): Promise<{ user: { id: string; email: string | null } }> {
+): Promise<{ user: { id: string; email: string | null }; credits?: number }> {
   const res = await fetch(`${baseUrl()}/auth/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
