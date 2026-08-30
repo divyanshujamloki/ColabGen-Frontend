@@ -105,6 +105,21 @@ export async function getMe(
   return parseJson(res);
 }
 
+export async function changePassword(
+  accessToken: string,
+  password: string,
+): Promise<{ ok: boolean; message: string }> {
+  const res = await fetch(`${baseUrl()}/auth/change-password`, {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ password }),
+  });
+  return parseJson(res);
+}
+
 export async function listJobs(
   accessToken: string,
   limit = 50,

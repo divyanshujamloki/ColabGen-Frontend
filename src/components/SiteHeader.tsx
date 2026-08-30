@@ -77,20 +77,27 @@ export function SiteHeader() {
                 History
               </Link>
 
-              {/* Real-Time Credits Pill */}
-              <button
-                type="button"
-                onClick={() => refreshCredits()}
-                title="Click to refresh credits balance"
-                className="flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-3 py-1 font-mono text-xs font-semibold text-teal-300 shadow-sm transition hover:bg-teal-500/20 active:scale-95 shrink-0"
+              {/* Sleek Compact Credits Pill linking to /profile */}
+              <Link
+                href="/profile"
+                title="View Credits & Usage in Profile"
+                className="flex items-center gap-1.5 rounded-full border border-teal-500/30 bg-teal-500/10 px-2.5 py-1 font-mono text-xs font-semibold text-teal-300 shadow-sm transition hover:bg-teal-500/20 hover:border-teal-400 active:scale-95 shrink-0"
               >
                 <span className="text-teal-400">⚡</span>
-                <span>{credits !== null ? `${credits} Credits` : "..."}</span>
-              </button>
+                <span>{credits !== null ? `${credits} Cr` : "..."}</span>
+              </Link>
 
-              <span className="hidden max-w-[8rem] truncate font-mono text-xs text-muted lg:inline shrink-0">
-                {email}
-              </span>
+              {/* Profile Link with Avatar */}
+              <Link
+                href="/profile"
+                title="Account Settings & Security"
+                className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-[#121923] px-2.5 py-1 text-xs font-medium text-foreground hover:border-teal-500/50 transition active:scale-95 shrink-0"
+              >
+                <span className="h-5 w-5 rounded-full bg-gradient-to-tr from-teal-400 to-emerald-400 text-slate-950 font-bold text-[11px] flex items-center justify-center">
+                  {email ? email[0].toUpperCase() : "U"}
+                </span>
+                <span className="hidden sm:inline">Profile</span>
+              </Link>
 
               <button
                 type="button"
