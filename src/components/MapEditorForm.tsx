@@ -10,9 +10,9 @@ import {
 } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
 import { useCredits } from "@/lib/credits/CreditsContext";
+import { Alert, Button, Card, EmptyState } from "@/components/ui";
 
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3 py-2 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
+const inputClass = "input-base disabled:opacity-60";
 
 const MAP_BG =
   "https://upload.wikimedia.org/wikipedia/commons/thumb/8/80/World_map_-_low_resolution.svg/1280px-World_map_-_low_resolution.svg.png";
@@ -325,14 +325,14 @@ export function MapEditorForm() {
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[1.4fr_1fr]">
-      <div>
+    <div className="grid gap-6 lg:grid-cols-[1.4fr_1fr] items-start">
+      <Card padding="sm" className="animate-fade-up overflow-hidden">
         <div
           ref={mapRef}
           role="application"
           aria-label="World map editor"
           onClick={onMapClick}
-          className="relative aspect-[2/1] w-full cursor-crosshair overflow-hidden rounded-lg border border-border bg-[#0b1d36] shadow-[inset_0_0_60px_rgba(0,0,0,0.35)]"
+          className="relative aspect-[2/1] w-full cursor-crosshair overflow-hidden rounded-xl border border-border bg-[#0b1d36] shadow-[inset_0_0_60px_rgba(0,0,0,0.35)]"
           style={{
             backgroundImage: `linear-gradient(180deg, rgba(12,18,24,0.25), rgba(12,18,24,0.45)), url(${MAP_BG})`,
             backgroundSize: "cover",
@@ -445,40 +445,27 @@ export function MapEditorForm() {
             );
           })}
         </div>
-        <p className="mt-2 text-xs text-muted">
-          Click to add pins. Drag pins to move them. Enter a caption, then drag
-          the caption bubble. Path style updates the lines on the map.
+        <p className="mt-3 px-1 text-xs text-muted">
+          Click to add pins. Drag to move. Enter a caption and drag the bubble to place it.
         </p>
-      </div>
+      </Card>
 
+      <Card padding="md" className="animate-fade-up-delay">
       <form onSubmit={onSubmit} className="space-y-4">
         <div className="flex flex-wrap gap-2">
-          <button
-            type="button"
-            disabled={!selectedId || loading}
-            onClick={() => setLinkFromId(selectedId)}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition hover:bg-surface-soft disabled:opacity-50"
-          >
+          <Button type="button" variant="secondary" size="sm" disabled={!selectedId || loading} onClick={() => setLinkFromId(selectedId)}>
             {linkFromId ? "Click target pin…" : "Link next"}
-          </button>
-          <button
-            type="button"
-            disabled={pins.length < 2 || loading}
-            onClick={autoConnect}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition hover:bg-surface-soft disabled:opacity-50"
-          >
+          </Button>
+          <Button type="button" variant="secondary" size="sm" disabled={pins.length < 2 || loading} onClick={autoConnect}>
             Auto-connect
-          </button>
-          <button
-            type="button"
-            disabled={!selectedId || loading}
-            onClick={removeSelected}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-danger transition hover:bg-surface-soft disabled:opacity-50"
-          >
+          </Button>
+          <Button type="button" variant="danger" size="sm" disabled={!selectedId || loading} onClick={removeSelected}>
             Remove pin
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
+            size="sm"
             disabled={loading || (pins.length === 0 && paths.length === 0)}
             onClick={() => {
               setPins([]);
@@ -487,10 +474,9 @@ export function MapEditorForm() {
               setLinkFromId(null);
               setResult(null);
             }}
-            className="rounded-md border border-border px-3 py-1.5 text-sm text-muted transition hover:bg-surface-soft disabled:opacity-50"
           >
             Clear
-          </button>
+          </Button>
         </div>
 
         {selected ? (
@@ -524,9 +510,7 @@ export function MapEditorForm() {
             </p>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-border px-4 py-6 text-sm text-muted">
-            Click the map to place your first stop.
-          </div>
+          <EmptyState title="No pin selected" description="Click the map to place your first stop." />
         )}
 
         <div className="grid grid-cols-2 gap-3">
@@ -561,35 +545,26 @@ export function MapEditorForm() {
           </label>
         </div>
 
+        <div className="text-xs text-muted">Cost: <strong className="text-accent">5 credits</strong></div>
+
         <div className="flex items-center gap-3">
-          <button
-            type="submit"
-            disabled={loading || pins.length < 2}
-            className="rounded-md bg-accent px-4 py-2 font-medium text-[#0c1218] transition hover:bg-accent-dim disabled:opacity-50"
-          >
+          <Button type="submit" loading={loading} disabled={pins.length < 2}>
             {loading ? "Rendering…" : "Render video"}
-          </button>
+          </Button>
           {loading ? (
-            <button
-              type="button"
-              onClick={() => abortRef.current?.abort()}
-              className="text-sm text-muted hover:text-foreground"
-            >
+            <Button type="button" variant="ghost" size="sm" onClick={() => abortRef.current?.abort()}>
               Cancel
-            </button>
+            </Button>
           ) : null}
         </div>
 
         {statusText ? (
-          <p className="text-sm text-muted" aria-live="polite">
+          <p className="flex items-center gap-2 text-sm text-muted" aria-live="polite">
+            <span className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin-ring" aria-hidden />
             {statusText}
           </p>
         ) : null}
-        {error ? (
-          <p className="text-sm text-danger" role="alert">
-            {error}
-          </p>
-        ) : null}
+        {error ? <Alert variant="error">{error}</Alert> : null}
 
         {result?.url ? (
           <div className="overflow-hidden rounded-lg border border-border bg-black/40">
@@ -618,6 +593,7 @@ export function MapEditorForm() {
           </div>
         ) : null}
       </form>
+      </Card>
     </div>
   );
 }

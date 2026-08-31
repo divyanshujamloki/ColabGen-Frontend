@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useMemo, useState } from "react";
 import { login } from "@/lib/api/client";
 import { ApiError } from "@/lib/api/types";
 import { saveSession } from "@/lib/auth/session";
+import { Alert, Button, Card, Input } from "@/components/ui";
+
+function isValidEmail(v: string) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+}
 
 export function LoginForm() {
   const router = useRouter();
@@ -15,9 +20,20 @@ export function LoginForm() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({ email: false, password: false });
+
+  const emailError = useMemo(() => {
+    if (!touched.email) return undefined;
+    if (!email.trim()) return "Email is required";
+    if (!isValidEmail(email)) return "Enter a valid email address";
+    return undefined;
+  }, [email, touched.email]);
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
+    setTouched({ email: true, password: true });
+    if (!isValidEmail(email)) return;
+
     setError(null);
     setLoading(true);
     try {
@@ -33,54 +49,45 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <div>
-        <label htmlFor="email" className="mb-1.5 block text-sm text-muted">
-          Email
-        </label>
-        <input
-          id="email"
+    <Card padding="lg" className="animate-fade-up">
+      <form onSubmit={onSubmit} className="space-y-5">
+        <Input
+          label="Email"
           type="email"
           autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-foreground outline-none ring-accent focus:ring-2"
+          onBlur={() => setTouched((t) => ({ ...t, email: true }))}
+          error={emailError}
+          placeholder="you@example.com"
         />
-      </div>
-      <div>
-        <label htmlFor="password" className="mb-1.5 block text-sm text-muted">
-          Password
-        </label>
-        <input
-          id="password"
+        <Input
+          label="Password"
           type="password"
           autoComplete="current-password"
           required
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-md border border-border bg-surface px-3 py-2.5 text-foreground outline-none ring-accent focus:ring-2"
+          onBlur={() => setTouched((t) => ({ ...t, password: true }))}
+          showPasswordToggle
+          placeholder="••••••••"
         />
-      </div>
-      {error ? (
-        <p className="text-sm text-danger" role="alert">
-          {error}
+
+        {error ? <Alert variant="error">{error}</Alert> : null}
+
+        <Button type="submit" fullWidth loading={loading} disabled={!email || !password}>
+          {loading ? "Signing in…" : "Sign in"}
+        </Button>
+
+        <p className="text-center text-sm text-muted">
+          No account?{" "}
+          <Link href="/signup" className="font-medium text-accent hover:underline">
+            Create one
+          </Link>
         </p>
-      ) : null}
-      <button
-        type="submit"
-        disabled={loading}
-        className="w-full rounded-md bg-accent py-2.5 font-medium text-[#0c1218] transition hover:bg-accent-dim disabled:opacity-60"
-      >
-        {loading ? "Signing in…" : "Sign in"}
-      </button>
-      <p className="text-center text-sm text-muted">
-        No account?{" "}
-        <Link href="/signup" className="text-accent hover:underline">
-          Sign up
-        </Link>
-      </p>
-    </form>
+      </form>
+    </Card>
   );
 }

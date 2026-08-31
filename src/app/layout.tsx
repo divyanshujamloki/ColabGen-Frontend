@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
 import { CreditsProvider } from "@/lib/credits/CreditsContext";
+import { ThemeProvider } from "@/lib/theme/ThemeProvider";
+import { THEME_STORAGE_KEY } from "@/lib/theme/theme";
 import "./globals.css";
 
 const display = Space_Grotesk({
@@ -26,14 +28,23 @@ export const metadata: Metadata = {
   description: "Generate images, videos, chat, and image edits on in-house BridgeGPU.",
 };
 
+const themeInitScript = `(function(){try{var k="${THEME_STORAGE_KEY}";var t=localStorage.getItem(k);if(t!=="light"&&t!=="dark")t="dark";document.documentElement.setAttribute("data-theme",t);document.documentElement.style.colorScheme=t;}catch(e){document.documentElement.setAttribute("data-theme","dark");}})();`;
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
       lang="en"
+      data-theme="dark"
+      suppressHydrationWarning
       className={`${display.variable} ${body.variable} ${mono.variable} h-full antialiased`}
     >
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-full flex flex-col bg-atmosphere text-foreground">
-        <CreditsProvider>{children}</CreditsProvider>
+        <ThemeProvider>
+          <CreditsProvider>{children}</CreditsProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

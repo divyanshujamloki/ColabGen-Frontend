@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getHealth } from "@/lib/api/client";
 import type { HealthResponse } from "@/lib/api/types";
+import { Badge } from "@/components/ui";
 
 export function HealthBadge() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
@@ -12,9 +13,7 @@ export function HealthBadge() {
   useEffect(() => {
     let cancelled = false;
     async function load() {
-      if (!cancelled) {
-        setWaking(true);
-      }
+      if (!cancelled) setWaking(true);
       try {
         const data = await getHealth();
         if (!cancelled) {
@@ -49,25 +48,16 @@ export function HealthBadge() {
           ? "GPU ready"
           : "GPU offline";
 
-  const tone = waking
-    ? "bg-amber-500/15 text-amber-300"
-    : error
-      ? "bg-danger/15 text-danger"
-      : gpuOk
-        ? "bg-accent/15 text-accent"
-        : "bg-muted/20 text-muted";
+  const variant = waking ? "warning" : error ? "danger" : gpuOk ? "success" : "default";
 
   return (
-    <span
-      className={`inline-flex items-center gap-2 rounded-md px-2.5 py-1 font-mono text-xs ${tone}`}
-      title="Live status from GET /health"
-    >
+    <Badge variant={variant} pulse={waking || (!error && !gpuOk && !waking)} className="font-mono">
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          waking ? "bg-amber-400" : error ? "bg-danger" : gpuOk ? "bg-accent" : "bg-muted"
+          waking ? "bg-warning" : error ? "bg-danger" : gpuOk ? "bg-success" : "bg-muted"
         }`}
       />
       {label}
-    </span>
+    </Badge>
   );
 }

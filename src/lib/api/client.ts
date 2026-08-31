@@ -99,7 +99,7 @@ export async function logout(accessToken: string): Promise<void> {
 export async function getMe(
   accessToken: string,
 ): Promise<{ user: { id: string; email: string | null }; credits?: number }> {
-  const res = await fetchWithRetry(`${baseUrl()}/auth/me`, {
+  const res = await fetch(`${baseUrl()}/auth/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });

@@ -1,15 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listJobs } from "@/lib/api/client";
 import type { JobRow } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
+import {
+  Alert,
+  Badge,
+  EmptyState,
+  HistorySkeleton,
+  PageHeader,
+  SegmentedControl,
+  StatusBadge,
+} from "@/components/ui";
+
+type ViewMode = "list" | "grid";
+type SortMode = "newest" | "oldest" | "type";
+type FilterType = "all" | "image" | "video" | "tts" | "img2img" | "map";
 
 export default function HistoryPage() {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [view, setView] = useState<ViewMode>("list");
+  const [sort, setSort] = useState<SortMode>("newest");
+  const [filterType, setFilterType] = useState<FilterType>("all");
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -32,128 +49,192 @@ export default function HistoryPage() {
       }
     }
     load();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, []);
 
+  const filtered = useMemo(() => {
+    let result = [...jobs];
+
+    if (filterType !== "all") {
+      result = result.filter((j) => j.type === filterType);
+    }
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((j) => j.prompt?.toLowerCase().includes(q));
+    }
+
+    result.sort((a, b) => {
+      if (sort === "type") return a.type.localeCompare(b.type);
+      const ta = new Date(a.created_at).getTime();
+      const tb = new Date(b.created_at).getTime();
+      return sort === "newest" ? tb - ta : ta - tb;
+    });
+
+    return result;
+  }, [jobs, filterType, search, sort]);
+
   return (
-    <div className="animate-fade-up">
-      <h1 className="mb-2 font-[family-name:var(--font-display)] text-3xl font-semibold tracking-tight">
-        History
-      </h1>
-      <p className="mb-8 max-w-xl text-muted">
-        Your recent generation jobs.
-      </p>
+    <div>
+      <PageHeader
+        title="History"
+        description="Your recent generation jobs across all tools."
+      />
+
+      {/* Toolbar */}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between animate-fade-up">
+        <input
+          type="search"
+          placeholder="Search by prompt…"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="input-base max-w-sm"
+        />
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={filterType}
+            onChange={(e) => setFilterType(e.target.value as FilterType)}
+            className="input-base !w-auto text-sm"
+          >
+            <option value="all">All types</option>
+            <option value="image">Image</option>
+            <option value="video">Video</option>
+            <option value="tts">Voice</option>
+            <option value="img2img">Edit</option>
+            <option value="map">Map</option>
+          </select>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortMode)}
+            className="input-base !w-auto text-sm"
+          >
+            <option value="newest">Newest first</option>
+            <option value="oldest">Oldest first</option>
+            <option value="type">By type</option>
+          </select>
+          <SegmentedControl
+            options={[
+              { value: "list" as ViewMode, label: "List" },
+              { value: "grid" as ViewMode, label: "Grid" },
+            ]}
+            value={view}
+            onChange={setView}
+            className="!w-auto"
+          />
+        </div>
+      </div>
 
       {loading ? (
-        <p className="text-sm text-muted">Loading…</p>
+        <HistorySkeleton />
       ) : error ? (
-        <p className="text-sm text-danger" role="alert">
-          {error}
-        </p>
-      ) : jobs.length === 0 ? (
-        <div className="rounded-lg border border-border bg-surface/50 px-6 py-12 text-center">
-          <p className="text-muted">No jobs yet.</p>
-          <Link
-            href="/generate"
-            className="mt-4 inline-block text-accent hover:underline"
-          >
-            Generate something
-          </Link>
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {jobs.map((job) => (
-            <li
-              key={job.id}
-              className="flex flex-col gap-3 rounded-lg border border-border bg-surface/50 p-4 sm:flex-row sm:items-start"
-            >
-              <div className="h-24 w-full shrink-0 overflow-hidden rounded-md bg-black/40 sm:w-36">
-                {job.status === "succeeded" && job.result_url ? (
-                  job.type === "image" || job.type === "img2img" ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={job.result_url}
-                      alt=""
-                      className="h-full w-full object-cover"
-                    />
-                  ) : job.type === "tts" ? (
-                    <div className="flex h-full flex-col items-center justify-center gap-1 px-2">
-                      <span className="font-mono text-[10px] uppercase tracking-wider text-accent">
-                        Audio
-                      </span>
-                      <audio
-                        src={job.result_url}
-                        controls
-                        className="h-8 w-full max-w-full"
-                      />
-                    </div>
-                  ) : (
-                    <video
-                      src={job.result_url}
-                      muted
-                      className="h-full w-full object-cover"
-                    />
-                  )
-                ) : (
-                  <div className="flex h-full items-center justify-center font-mono text-xs text-muted">
-                    {job.status}
-                  </div>
-                )}
-              </div>
-              <div className="min-w-0 flex-1">
-                <div className="mb-1 flex flex-wrap items-center gap-2">
-                  <span className="rounded bg-surface-soft px-2 py-0.5 font-mono text-xs capitalize text-accent">
-                    {job.type}
-                  </span>
-                  <StatusPill status={job.status} />
-                  <time
-                    dateTime={job.created_at}
-                    className="font-mono text-xs text-muted"
-                  >
-                    {new Date(job.created_at).toLocaleString()}
-                  </time>
-                </div>
-                <p className="line-clamp-2 text-sm text-foreground">
-                  {job.prompt}
-                </p>
-                {job.error ? (
-                  <p className="mt-1 text-xs text-danger">{job.error}</p>
-                ) : null}
-                <div className="mt-2 flex flex-wrap gap-3 font-mono text-xs text-muted">
-                  {job.inference_ms != null ? (
-                    <span>{job.inference_ms} ms</span>
-                  ) : null}
-                  {job.seed ? <span>seed {job.seed}</span> : null}
-                  {job.result_url ? (
-                    <a
-                      href={job.result_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="text-accent hover:underline"
-                    >
-                      Open result
-                    </a>
-                  ) : null}
-                </div>
-              </div>
-            </li>
+        <Alert variant="error">{error}</Alert>
+      ) : filtered.length === 0 ? (
+        <EmptyState
+          title={jobs.length === 0 ? "No jobs yet" : "No matching jobs"}
+          description={
+            jobs.length === 0
+              ? "Generate something to see it appear here."
+              : "Try adjusting your search or filters."
+          }
+          action={jobs.length === 0 ? { label: "Start generating", href: "/generate" } : undefined}
+        />
+      ) : view === "list" ? (
+        <ul className="space-y-3 animate-fade-up">
+          {filtered.map((job) => (
+            <JobListItem key={job.id} job={job} />
           ))}
         </ul>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 animate-fade-up">
+          {filtered.map((job) => (
+            <JobGridItem key={job.id} job={job} />
+          ))}
+        </div>
       )}
     </div>
   );
 }
 
-function StatusPill({ status }: { status: JobRow["status"] }) {
-  const tone =
-    status === "succeeded"
-      ? "text-accent"
-      : status === "failed"
-        ? "text-danger"
-        : "text-muted";
+function JobThumbnail({ job }: { job: JobRow }) {
+  if (job.status === "succeeded" && job.result_url) {
+    if (job.type === "image" || job.type === "img2img") {
+      return (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={job.result_url} alt="" className="h-full w-full object-cover" />
+      );
+    }
+    if (job.type === "tts") {
+      return (
+        <div className="flex h-full flex-col items-center justify-center gap-1 px-2 bg-surface-soft">
+          <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15.536 8.464a5 5 0 010 7.072M12 6v12m-6-6h12" />
+          </svg>
+          <span className="text-[10px] uppercase tracking-wider text-muted">Audio</span>
+        </div>
+      );
+    }
+    return (
+      <video src={job.result_url} muted className="h-full w-full object-cover" />
+    );
+  }
   return (
-    <span className={`font-mono text-xs capitalize ${tone}`}>{status}</span>
+    <div className="flex h-full items-center justify-center font-mono text-xs text-muted capitalize">
+      {job.status}
+    </div>
+  );
+}
+
+function JobListItem({ job }: { job: JobRow }) {
+  return (
+    <li className="card card-interactive flex flex-col gap-3 p-4 sm:flex-row sm:items-start">
+      <div className="h-24 w-full shrink-0 overflow-hidden rounded-lg bg-preview sm:w-36">
+        <JobThumbnail job={job} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="mb-1.5 flex flex-wrap items-center gap-2">
+          <Badge variant="accent">{job.type}</Badge>
+          <StatusBadge status={job.status} />
+          <time dateTime={job.created_at} className="font-mono text-xs text-muted">
+            {new Date(job.created_at).toLocaleString()}
+          </time>
+        </div>
+        <p className="line-clamp-2 text-sm text-foreground">{job.prompt}</p>
+        {job.error ? <p className="mt-1 text-xs text-danger">{job.error}</p> : null}
+        <div className="mt-2 flex flex-wrap gap-3 font-mono text-xs text-muted">
+          {job.inference_ms != null ? <span>{job.inference_ms} ms</span> : null}
+          {job.seed ? <span>seed {job.seed}</span> : null}
+          {job.result_url ? (
+            <a href={job.result_url} target="_blank" rel="noreferrer" className="text-accent hover:underline">
+              Open result
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </li>
+  );
+}
+
+function JobGridItem({ job }: { job: JobRow }) {
+  return (
+    <div className="card card-interactive overflow-hidden group">
+      <div className="aspect-video overflow-hidden bg-preview">
+        <JobThumbnail job={job} />
+      </div>
+      <div className="p-4">
+        <div className="mb-2 flex items-center gap-2">
+          <Badge variant="accent">{job.type}</Badge>
+          <StatusBadge status={job.status} />
+        </div>
+        <p className="line-clamp-2 text-sm text-foreground">{job.prompt}</p>
+        <div className="mt-2 flex items-center justify-between text-xs text-muted">
+          <time dateTime={job.created_at}>{new Date(job.created_at).toLocaleDateString()}</time>
+          {job.result_url ? (
+            <a href={job.result_url} target="_blank" rel="noreferrer" className="text-accent hover:underline opacity-0 group-hover:opacity-100 transition">
+              Open
+            </a>
+          ) : null}
+        </div>
+      </div>
+    </div>
   );
 }

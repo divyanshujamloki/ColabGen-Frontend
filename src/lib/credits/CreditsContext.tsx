@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { getMe } from "@/lib/api/client";
-import { getAccessToken, getStoredEmail } from "@/lib/auth/session";
+import { getAccessToken } from "@/lib/auth/session";
 
 export interface CreditToast {
   id: string;
@@ -62,8 +62,9 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
         return res.credits;
       }
       return null;
-    } catch (err) {
-      console.error("Failed to fetch credits:", err);
+    } catch {
+      // API unreachable or session expired — fail silently; UI shows "…" for credits
+      setCredits(null);
       return null;
     } finally {
       setLoading(false);
@@ -71,8 +72,10 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (getStoredEmail()) {
+    if (getAccessToken()) {
       refreshCredits();
+    } else {
+      setCredits(null);
     }
   }, [refreshCredits]);
 

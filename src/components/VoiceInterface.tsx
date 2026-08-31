@@ -5,9 +5,7 @@ import { generateTts } from "@/lib/api/client";
 import { ApiError, type TtsResponse } from "@/lib/api/types";
 import { getAccessToken } from "@/lib/auth/session";
 import { useCredits } from "@/lib/credits/CreditsContext";
-
-const inputClass =
-  "w-full rounded-md border border-border bg-surface px-3 py-2.5 text-foreground outline-none ring-accent focus:ring-2 disabled:opacity-60";
+import { Alert, Button, Card, CardHeader, EmptyState, LoadingOverlay, Textarea } from "@/components/ui";
 
 const MAX_AUDIO_MB = 8;
 
@@ -123,23 +121,14 @@ export function VoiceInterface() {
 
       deductCredits(5, "Voice TTS Synthesis");
       setResult(data);
-      const dataUrl = `data:audio/wav;base64,${data.audio_base64}`;
-      setPlaybackUrl(dataUrl);
+      setPlaybackUrl(`data:audio/wav;base64,${data.audio_base64}`);
       setStatusText(null);
 
       requestAnimationFrame(() => {
-        void audioRef.current?.play().catch(() => {
-          /* autoplay may be blocked */
-        });
+        void audioRef.current?.play().catch(() => {});
       });
     } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Voice generation failed");
-      }
+      setError(err instanceof ApiError || err instanceof Error ? err.message : "Voice generation failed");
       setStatusText(null);
     } finally {
       setLoading(false);
@@ -147,197 +136,112 @@ export function VoiceInterface() {
   }
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
-      <form onSubmit={onSubmit} className="space-y-5 rounded-lg border border-border bg-surface/60 p-5">
-        <div>
-          <label className="mb-2 block text-sm font-medium text-foreground">
-            Text to speak
-          </label>
-          <textarea
+    <div className="grid gap-6 lg:grid-cols-2 items-start">
+      <Card padding="md" className="animate-fade-up">
+        <form onSubmit={onSubmit} className="space-y-5">
+          <Textarea
+            label="Text to speak"
             value={text}
             onChange={(e) => setText(e.target.value)}
-            className={inputClass}
             rows={5}
-            placeholder="Enter the words you want spoken…"
             maxLength={2000}
+            showCount
             disabled={loading}
             required
+            placeholder="Enter the words you want spoken…"
           />
-          <p className="mt-1 text-right font-mono text-[11px] text-muted">
-            {text.length}/2000
-          </p>
-        </div>
 
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-          className={`rounded-lg border border-dashed px-4 py-6 text-center transition ${
-            dragOver
-              ? "border-accent bg-accent/10"
-              : "border-border bg-surface-soft/40"
-          }`}
-        >
-          <p className="mb-1 text-sm font-medium text-foreground">
-            Reference voice (optional)
-          </p>
-          <p className="mb-3 text-xs text-muted">
-            Drop a clean 5–15s clip for cloning. Single speaker, no music.
-          </p>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="audio/wav,audio/mpeg,audio/mp3,audio/mp4,audio/x-m4a,audio/ogg,.wav,.mp3,.m4a"
-            className="hidden"
-            onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
-            disabled={loading}
-          />
-          <div className="flex flex-wrap items-center justify-center gap-2">
-            <button
-              type="button"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
-              className="rounded-md border border-border px-3 py-1.5 text-sm text-foreground transition hover:border-accent/50 disabled:opacity-50"
-            >
-              Choose audio
-            </button>
-            {referenceName ? (
-              <>
-                <span className="max-w-[12rem] truncate font-mono text-xs text-accent">
-                  {referenceName}
-                </span>
-                <button
-                  type="button"
-                  onClick={clearReference}
-                  disabled={loading}
-                  className="text-xs text-muted underline hover:text-foreground"
-                >
-                  Clear
-                </button>
-              </>
-            ) : (
-              <span className="text-xs text-muted">Using default speaker</span>
-            )}
-          </div>
-        </div>
-
-        <div>
-          <label className="mb-2 block text-sm font-medium">Language</label>
-          <select
-            value={language}
-            onChange={(e) => setLanguage(e.target.value)}
-            className={inputClass}
-            disabled={loading}
+          <div
+            onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            className={`rounded-xl border border-dashed px-4 py-6 text-center transition ${
+              dragOver ? "border-accent bg-accent/10" : "border-border bg-[var(--bg-sunken)]/40"
+            }`}
           >
-            {LANGUAGES.map((l) => (
-              <option key={l.code} value={l.code}>
-                {l.label}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {error ? (
-          <p className="rounded-md border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-300">
-            {error}
-          </p>
-        ) : null}
-        {statusText ? (
-          <p className="flex items-center gap-2 text-sm text-muted">
-            <span
-              className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin-ring"
-              aria-hidden
+            <svg className="mx-auto mb-2 h-8 w-8 text-muted/60" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            <p className="text-sm font-medium text-foreground">Reference voice (optional)</p>
+            <p className="mb-3 text-xs text-muted">Drop a clean 5–15s clip for voice cloning</p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="audio/wav,audio/mpeg,audio/mp3,audio/mp4,audio/x-m4a,audio/ogg,.wav,.mp3,.m4a"
+              className="hidden"
+              onChange={(e) => handleFile(e.target.files?.[0] ?? null)}
+              disabled={loading}
             />
-            {statusText}
-          </p>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={loading || !text.trim()}
-          className={`w-full rounded-md px-6 py-2.5 font-[family-name:var(--font-display)] font-semibold transition ${
-            loading || !text.trim()
-              ? "cursor-not-allowed bg-surface-soft text-muted"
-              : "bg-accent text-[#0c1218] hover:bg-accent-dim"
-          }`}
-        >
-          {loading ? "Generating voice…" : "Generate voice"}
-        </button>
-      </form>
-
-      <div className="flex min-h-[280px] flex-col rounded-lg border border-border bg-surface/60 p-5">
-        <h2 className="mb-1 font-[family-name:var(--font-display)] text-lg font-semibold">
-          Result
-        </h2>
-        <p className="mb-4 text-xs text-muted">
-          Free in-house XTTS on BridgeGPU. Playback is immediate; a copy is saved to history.
-        </p>
-
-        {loading && !playbackUrl ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-muted">
-            <span
-              className="h-8 w-8 rounded-full border-2 border-accent border-t-transparent animate-spin-ring"
-              aria-hidden
-            />
-            <p className="text-sm">Synthesizing…</p>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button type="button" variant="secondary" size="sm" onClick={() => fileInputRef.current?.click()} disabled={loading}>
+                Choose audio
+              </Button>
+              {referenceName ? (
+                <>
+                  <span className="max-w-[12rem] truncate font-mono text-xs text-accent">{referenceName}</span>
+                  <button type="button" onClick={clearReference} disabled={loading} className="text-xs text-muted underline hover:text-foreground">Clear</button>
+                </>
+              ) : (
+                <span className="text-xs text-muted">Using default speaker</span>
+              )}
+            </div>
           </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-muted">Language</label>
+            <select value={language} onChange={(e) => setLanguage(e.target.value)} className="input-base" disabled={loading}>
+              {LANGUAGES.map((l) => (
+                <option key={l.code} value={l.code}>{l.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {error ? <Alert variant="error">{error}</Alert> : null}
+          {statusText ? (
+            <p className="flex items-center gap-2 text-sm text-muted">
+              <span className="h-4 w-4 rounded-full border-2 border-accent border-t-transparent animate-spin-ring" aria-hidden />
+              {statusText}
+            </p>
+          ) : null}
+
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Cost: <strong className="text-accent">5 credits</strong></span>
+          </div>
+
+          <Button type="submit" fullWidth loading={loading} disabled={!text.trim()}>
+            {loading ? "Generating voice…" : "Generate voice"}
+          </Button>
+        </form>
+      </Card>
+
+      <Card padding="md" className="flex min-h-[320px] flex-col animate-fade-up-delay">
+        <CardHeader title="Result" description="XTTS-v2 on BridgeGPU. Playback is immediate." />
+        {loading && !playbackUrl ? (
+          <LoadingOverlay label="Synthesizing…" />
         ) : playbackUrl ? (
-          <div className="flex flex-1 flex-col gap-4">
-            <audio
-              ref={audioRef}
-              controls
-              src={playbackUrl}
-              className="w-full"
-            />
+          <div className="flex flex-1 flex-col gap-4 animate-fade-up">
+            <div className="rounded-xl border border-border/60 bg-[var(--bg-sunken)] p-4">
+              <audio ref={audioRef} controls src={playbackUrl} className="w-full" />
+            </div>
             {result ? (
               <dl className="grid grid-cols-2 gap-2 font-mono text-[11px] text-muted">
-                <div>
-                  <dt className="opacity-70">Model</dt>
-                  <dd className="text-foreground">XTTS-v2</dd>
-                </div>
-                <div>
-                  <dt className="opacity-70">Format</dt>
-                  <dd className="text-foreground">{result.format}</dd>
-                </div>
-                <div>
-                  <dt className="opacity-70">Inference</dt>
-                  <dd className="text-foreground">{result.inference_ms} ms</dd>
-                </div>
-                <div>
-                  <dt className="opacity-70">Job</dt>
-                  <dd className="truncate text-foreground">{result.id.slice(0, 8)}…</dd>
-                </div>
+                <div><dt className="opacity-70">Model</dt><dd className="text-foreground">XTTS-v2</dd></div>
+                <div><dt className="opacity-70">Format</dt><dd className="text-foreground">{result.format}</dd></div>
+                <div><dt className="opacity-70">Inference</dt><dd className="text-foreground">{result.inference_ms} ms</dd></div>
+                <div><dt className="opacity-70">Job</dt><dd className="truncate text-foreground">{result.id.slice(0, 8)}…</dd></div>
               </dl>
             ) : null}
-            {result?.url ? (
-              <div className="mt-auto flex flex-wrap gap-3">
-                <a
-                  href={result.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-accent hover:underline"
-                >
-                  Open Cloudinary URL
-                </a>
-                <a
-                  href={playbackUrl}
-                  download={`gpubridge-voice.${result.format}`}
-                  className="text-sm text-muted hover:text-foreground hover:underline"
-                >
-                  Download
-                </a>
-              </div>
-            ) : null}
+            <div className="mt-auto flex flex-wrap gap-3">
+              {result?.url ? (
+                <a href={result.url} target="_blank" rel="noopener noreferrer" className="text-sm text-accent hover:underline">Open URL</a>
+              ) : null}
+              <a href={playbackUrl} download={`gpubridge-voice.${result?.format ?? "wav"}`} className="btn-secondary !text-sm !py-2 !px-4">Download</a>
+            </div>
           </div>
         ) : (
-          <div className="flex flex-1 items-center justify-center text-sm text-muted">
-            Generated audio will appear here.
-          </div>
+          <EmptyState title="No audio yet" description="Enter text and generate to hear the result." />
         )}
-      </div>
+      </Card>
     </div>
   );
 }
