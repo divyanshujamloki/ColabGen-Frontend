@@ -7,20 +7,26 @@ import type { HealthResponse } from "@/lib/api/types";
 export function HealthBadge() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState(false);
+  const [waking, setWaking] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     async function load() {
+      if (!cancelled) {
+        setWaking(true);
+      }
       try {
         const data = await getHealth();
         if (!cancelled) {
           setHealth(data);
           setError(false);
+          setWaking(false);
         }
       } catch {
         if (!cancelled) {
           setHealth(null);
           setError(true);
+          setWaking(false);
         }
       }
     }
@@ -33,19 +39,23 @@ export function HealthBadge() {
   }, []);
 
   const gpuOk = Boolean(health?.gpu?.ok);
-  const label = error
-    ? "API offline"
-    : !health
-      ? "Checking…"
-      : gpuOk
-        ? "GPU ready"
-        : "GPU offline";
+  const label = waking
+    ? "Waking API…"
+    : error
+      ? "API offline"
+      : !health
+        ? "Checking…"
+        : gpuOk
+          ? "GPU ready"
+          : "GPU offline";
 
-  const tone = error
-    ? "bg-danger/15 text-danger"
-    : gpuOk
-      ? "bg-accent/15 text-accent"
-      : "bg-muted/20 text-muted";
+  const tone = waking
+    ? "bg-amber-500/15 text-amber-300"
+    : error
+      ? "bg-danger/15 text-danger"
+      : gpuOk
+        ? "bg-accent/15 text-accent"
+        : "bg-muted/20 text-muted";
 
   return (
     <span
@@ -54,7 +64,7 @@ export function HealthBadge() {
     >
       <span
         className={`h-1.5 w-1.5 rounded-full ${
-          error ? "bg-danger" : gpuOk ? "bg-accent" : "bg-muted"
+          waking ? "bg-amber-400" : error ? "bg-danger" : gpuOk ? "bg-accent" : "bg-muted"
         }`}
       />
       {label}

@@ -15,6 +15,7 @@ import {
   type TtsResponse,
   type VideoGenerateBody,
 } from "./types";
+import { fetchWithRetry } from "./fetchWithRetry";
 
 function baseUrl(): string {
   const url = process.env.NEXT_PUBLIC_API_BASE_URL;
@@ -52,7 +53,7 @@ async function parseJson<T>(res: Response): Promise<T> {
 }
 
 export async function getHealth(): Promise<HealthResponse> {
-  const res = await fetch(`${baseUrl()}/health`, {
+  const res = await fetchWithRetry(`${baseUrl()}/health`, {
     method: "GET",
     cache: "no-store",
   });
@@ -98,7 +99,7 @@ export async function logout(accessToken: string): Promise<void> {
 export async function getMe(
   accessToken: string,
 ): Promise<{ user: { id: string; email: string | null }; credits?: number }> {
-  const res = await fetch(`${baseUrl()}/auth/me`, {
+  const res = await fetchWithRetry(`${baseUrl()}/auth/me`, {
     headers: { Authorization: `Bearer ${accessToken}` },
     cache: "no-store",
   });
