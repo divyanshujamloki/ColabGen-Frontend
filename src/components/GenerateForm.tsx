@@ -21,7 +21,7 @@ type Mode = "image" | "video";
 
 const PRESETS = {
   image: { quick: { steps: 15, guidance: 7.5 }, quality: { steps: 35, guidance: 8.5 } },
-  video: { quick: { steps: 15, guidance: 9 }, quality: { steps: 30, guidance: 10 } },
+  video: { quick: { steps: 8, guidance: 3 }, quality: { steps: 15, guidance: 4 } },
 };
 
 const inputClass = "input-base disabled:opacity-60";
@@ -35,7 +35,7 @@ export function GenerateForm() {
   const [width, setWidth] = useState(512);
   const [height, setHeight] = useState(512);
   const [guidance, setGuidance] = useState(7.5);
-  const [fps, setFps] = useState(8);
+  const [fps, setFps] = useState(24);
   const [seed, setSeed] = useState("");
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -99,9 +99,9 @@ export function GenerateForm() {
               {
                 prompt,
                 negative_prompt: negativePrompt || null,
-                steps,
-                fps,
-                guidance_scale: guidance,
+                steps: Math.min(20, Math.max(4, steps)),
+                fps: Math.min(24, Math.max(8, fps)),
+                guidance_scale: Math.min(10, Math.max(1, guidance)),
                 seed: seedNum,
               },
               pollOpts,
@@ -139,8 +139,9 @@ export function GenerateForm() {
   function switchMode(next: Mode) {
     if (loading) return;
     setMode(next);
-    setSteps(25);
-    setGuidance(next === "image" ? 7.5 : 9.0);
+    setSteps(next === "image" ? 25 : 8);
+    setGuidance(next === "image" ? 7.5 : 3);
+    if (next === "video") setFps(24);
     setError(null);
   }
 
@@ -241,12 +242,12 @@ export function GenerateForm() {
           {showAdvanced ? (
             <div className="rounded-xl border border-border/50 bg-[var(--bg-sunken)]/60 p-3.5 space-y-3 animate-fade-in">
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <Field label={`Steps (${mode === "image" ? "15–50" : "10–40"})`} id="steps">
+                <Field label={`Steps (${mode === "image" ? "15–50" : "4–20"})`} id="steps">
                   <input
                     id="steps"
                     type="number"
-                    min={mode === "image" ? 15 : 10}
-                    max={mode === "image" ? 50 : 40}
+                    min={mode === "image" ? 15 : 4}
+                    max={mode === "image" ? 50 : 20}
                     value={steps}
                     onChange={(e) => setSteps(Number(e.target.value))}
                     disabled={loading}
@@ -264,13 +265,23 @@ export function GenerateForm() {
                     </Field>
                   </>
                 ) : (
-                  <Field label="FPS (4–12)" id="fps">
-                    <input id="fps" type="number" min={4} max={12} value={fps} onChange={(e) => setFps(Number(e.target.value))} disabled={loading} className={inputClass} />
+                  <Field label="FPS (8–24)" id="fps">
+                    <input id="fps" type="number" min={8} max={24} value={fps} onChange={(e) => setFps(Number(e.target.value))} disabled={loading} className={inputClass} />
                   </Field>
                 )}
 
-                <Field label="Guidance" id="guidance">
-                  <input id="guidance" type="number" min={0} max={20} step={0.5} value={guidance} onChange={(e) => setGuidance(Number(e.target.value))} disabled={loading} className={inputClass} />
+                <Field label={`Guidance (${mode === "image" ? "1–15" : "1–10"})`} id="guidance">
+                  <input
+                    id="guidance"
+                    type="number"
+                    min={1}
+                    max={mode === "image" ? 15 : 10}
+                    step={0.5}
+                    value={guidance}
+                    onChange={(e) => setGuidance(Number(e.target.value))}
+                    disabled={loading}
+                    className={inputClass}
+                  />
                 </Field>
 
                 <Field label="Seed" id="seed">
@@ -284,7 +295,7 @@ export function GenerateForm() {
 
           <div className="flex items-center justify-between text-xs text-muted">
             <span>Cost: <strong className="text-accent">{creditCost} credits</strong></span>
-            <span>~10–30s on GPU</span>
+            <span>{mode === "image" ? "~10–30s" : "~3–8 min"} on GPU</span>
           </div>
 
           <Button type="submit" fullWidth loading={loading} disabled={!prompt.trim()}>
