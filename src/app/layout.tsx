@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, IBM_Plex_Sans, Space_Grotesk } from "next/font/google";
 import { CreditsProvider } from "@/lib/credits/CreditsContext";
 import { ThemeProvider } from "@/lib/theme/ThemeProvider";
+import { RenderKeepAlive } from "@/components/RenderKeepAlive";
 import { THEME_STORAGE_KEY } from "@/lib/theme/theme";
 import "./globals.css";
 
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-atmosphere text-foreground">
+        <RenderKeepAlive />
         <ThemeProvider>
           <CreditsProvider>{children}</CreditsProvider>
         </ThemeProvider>
