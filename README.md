@@ -1,5 +1,8 @@
 # GPUBridge / ColabGen Frontend
 
+project-link :https://gpubridge.netlify.app/
+
+
 Next.js UI for [ColabGen API](https://colabgen.onrender.com). The browser talks **only** to Express — auth, jobs, and generate. Supabase stays on the server.
 
 ## Quick start
