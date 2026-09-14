@@ -4,6 +4,7 @@ import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { getStoredEmail, getAccessToken, clearSession } from "@/lib/auth/session";
 import { changePassword, logout } from "@/lib/api/client";
+import { getSupportEmail } from "@/lib/config";
 import { useCredits } from "@/lib/credits/CreditsContext";
 import { Alert, Badge, Button, Card, CardHeader, Input, SegmentedControl } from "@/components/ui";
 import { useTheme } from "@/lib/theme/ThemeProvider";
@@ -105,8 +106,11 @@ export function ProfileView() {
     setPwdSuccess(null);
   }
 
+  const supportEmail = getSupportEmail();
+
   function copyAdminEmail() {
-    navigator.clipboard.writeText("divyanshujamloki05@gmail.com");
+    if (!supportEmail) return;
+    navigator.clipboard.writeText(supportEmail);
     setCopiedEmail(true);
     setTimeout(() => setCopiedEmail(false), 2500);
   }
@@ -191,19 +195,25 @@ export function ProfileView() {
             <div className="mt-6 rounded-xl border border-accent/25 bg-accent/5 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
                 <p className="text-sm font-semibold text-accent">Need more credits?</p>
-                <p className="text-xs text-muted mt-0.5">Contact admin for a free credit top-up.</p>
+                <p className="text-xs text-muted mt-0.5">
+                  {supportEmail
+                    ? "Contact admin for a free credit top-up."
+                    : "Contact the site admin for a free credit top-up."}
+                </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <a
-                  href="mailto:divyanshujamloki05@gmail.com?subject=GPUBridge%20Credits%20Top-up%20Request"
-                  className="btn-primary !text-xs !py-2 !px-3.5"
-                >
-                  Email admin
-                </a>
-                <button type="button" onClick={copyAdminEmail} className="btn-secondary !text-xs !py-2 !px-3">
-                  {copiedEmail ? "Copied!" : "Copy email"}
-                </button>
-              </div>
+              {supportEmail ? (
+                <div className="flex items-center gap-2 shrink-0">
+                  <a
+                    href={`mailto:${supportEmail}?subject=GPUBridge%20Credits%20Top-up%20Request`}
+                    className="btn-primary !text-xs !py-2 !px-3.5"
+                  >
+                    Email admin
+                  </a>
+                  <button type="button" onClick={copyAdminEmail} className="btn-secondary !text-xs !py-2 !px-3">
+                    {copiedEmail ? "Copied!" : "Copy email"}
+                  </button>
+                </div>
+              ) : null}
             </div>
           </Card>
         </div>

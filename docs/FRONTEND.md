@@ -7,6 +7,7 @@ Next.js client for the ColabGen Express API. **No direct Supabase calls from the
 | Variable | Value |
 |----------|--------|
 | `NEXT_PUBLIC_API_BASE_URL` | `https://colabgen.onrender.com` |
+| `NEXT_PUBLIC_SUPPORT_EMAIL` | Optional. Set in the host dashboard, not in git. |
 
 ## Flows
 

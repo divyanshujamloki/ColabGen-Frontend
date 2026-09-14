@@ -70,8 +70,7 @@ When a user signs up via `POST /auth/signup`:
 Before GPU inference begins:
 1. `CreditService.deductCredits(userId, operation, cost)` queries `public.credits`.
 2. **Balance Check**:
-   - If `balance < cost`, throws an error:  
-     `"Contact admin for this my gmail divyanshujamloki05@gmail to add more free credits"`
+   - If `balance < cost`, throws an error asking the user to contact the site admin for more credits.
 3. **Atomic Deduction**:
    - Updates `balance = balance - cost`.
 4. **Audit Logging**:
@@ -120,5 +119,4 @@ WHERE user_id = '<USER_UUID>';
 
 ## 7. Contact & Support
 
-For credit top-ups or inquiries:
-- **Email**: `divyanshujamloki05@gmail.com`
+For credit top-ups or inquiries, set `NEXT_PUBLIC_SUPPORT_EMAIL` in the frontend host environment (Netlify). Do not commit a personal address to git.

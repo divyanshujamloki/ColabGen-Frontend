@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { getMe } from "@/lib/api/client";
 import { getAccessToken } from "@/lib/auth/session";
+import { getSupportEmail } from "@/lib/config";
 
 export interface CreditToast {
   id: string;
@@ -95,12 +96,17 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
         });
 
         // Low balance warning
+        const supportEmail = getSupportEmail();
+        const contactHint = supportEmail
+          ? `Email ${supportEmail} for a free top-up.`
+          : "Contact the site admin for a free top-up.";
+
         if (remaining <= 15 && remaining > 0) {
           setTimeout(() => {
             addToast({
               type: "warning",
               title: "⚠️ Low Credits Warning",
-              message: `Only ${remaining} credits remaining. Email divyanshujamloki05@gmail for free top-up.`,
+              message: `Only ${remaining} credits remaining. ${contactHint}`,
             });
           }, 600);
         } else if (remaining === 0) {
@@ -108,7 +114,7 @@ export function CreditsProvider({ children }: { children: React.ReactNode }) {
             addToast({
               type: "warning",
               title: "🚫 Credits Exhausted",
-              message: "You have 0 credits. Please contact admin at divyanshujamloki05@gmail.",
+              message: `You have 0 credits. ${contactHint}`,
             });
           }, 600);
         }
